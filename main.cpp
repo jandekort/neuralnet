@@ -6,9 +6,10 @@
 #include <string>
 #include <filesystem>
 
-#include "Activation.h"
+#include "Sigmoid.h"
 #include "Network.h"
-#include "IDataReader.h"
+//#include "IDataReader.h"
+#include "MnistReader.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -37,17 +38,21 @@ int main()
         const auto& ex = reader.training()[4];
         int label = 0;
         ex.second.maxCoeff(&label);
-        reader.print_ascii_digit(ex.first, label);
+        reader.print(ex.first, label);
 
         // Show the 91st test example as a sanity check
         auto [img, lbl] = reader.test()[90];
-        reader.print_ascii_digit(img, lbl);
+        reader.print(img, lbl);
 
         Network net({784, 30, 10}, act);
         auto train = reader.training();
 
         // Train and evaluate
         net.SGD(train, epochs, mini_batch_size, eta, &reader.test());
+
+
+        std::cout << argmax(net.feedforward(ex.first)) << std::endl;
+        std::cout << argmax(net.feedforward(img)) << std::endl;
 
         return 0;
     }
