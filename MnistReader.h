@@ -16,7 +16,7 @@ public:
     void load() override;
     
     const std::vector<Example>& training() const override { return training_; }
-    const std::vector<std::pair<VectorXd,int>>& test() const override { return test_; }
+    const std::vector<Example>& test() const override { return test_; }
 
     void print(const VectorXd& img, int label, int rows = 28, int cols = 28);
 
@@ -26,7 +26,6 @@ private:
 
 private:
     std::string train_images_, train_labels_, test_images_, test_labels_;
-    std::vector<Example> training_;
-    std::vector<std::pair<VectorXd,int>> test_;
+    std::vector<Example> training_, test_;
 };
 

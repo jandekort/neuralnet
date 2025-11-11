@@ -52,7 +52,7 @@ VectorXd Network::feedforward(const VectorXd& a0) const
 
 void Network::SGD(std::vector<Example>& training_data,
          int epochs, int mini_batch_size, double eta,
-         const std::vector<std::pair<VectorXd,int>>* test_data)
+         const std::vector<Example>* test_data)
 {
     const int n = static_cast<int>(training_data.size());
     for (int ep = 0; ep < epochs; ++ep)
@@ -75,12 +75,12 @@ void Network::SGD(std::vector<Example>& training_data,
     }
 }
 
-int Network::evaluate(const std::vector<std::pair<VectorXd,int>>& test_data) const
+int Network::evaluate(const std::vector<Example>& test_data) const
 {
     int correct = 0;
     for (const auto& [x, y_label] : test_data)
     {
-        if (argmax(feedforward(x)) == y_label)
+        if (argmax(feedforward(x)) == argmax(y_label) )
         {
             ++correct;
         }

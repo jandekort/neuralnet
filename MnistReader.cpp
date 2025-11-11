@@ -17,17 +17,27 @@ void MnistReader::load()
     auto teX = load_images(test_images_);
     auto teY = load_labels(test_labels_);
 
-    if (trX.size() != trY.size()) throw std::runtime_error("train images/labels mismatch");
-    if (teX.size() != teY.size()) throw std::runtime_error("test images/labels mismatch");
+    if (trX.size() != trY.size())
+    {
+        throw std::runtime_error("train images/labels mismatch");
+    }
+    if (teX.size() != teY.size())
+    {
+        throw std::runtime_error("test images/labels mismatch");
+    }
 
     training_.clear(); test_.clear();
     training_.reserve(trX.size());
     for (size_t i = 0; i < trX.size(); ++i)
-    training_.emplace_back(std::move(trX[i]), std_basis_vec(trY[i], 10));
+    {
+        training_.emplace_back(std::move(trX[i]), std_basis_vec(trY[i], 10));
+    }
 
     test_.reserve(teX.size());
     for (size_t i = 0; i < teX.size(); ++i)
-    test_.emplace_back(std::move(teX[i]), teY[i]);
+    {
+        test_.emplace_back(std::move(teX[i]), std_basis_vec(teY[i], 10));
+    }
 }
 
 std::vector<VectorXd> MnistReader::load_images(const std::string& path)

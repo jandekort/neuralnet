@@ -56,9 +56,9 @@ public:
 
     void SGD(std::vector<Example>& training_data,
              int epochs, int mini_batch_size, double eta,
-             const std::vector<std::pair<VectorXd,int>>* test_data = nullptr);
+             const std::vector<Example>* test_data = nullptr);
 
-    int evaluate(const std::vector<std::pair<VectorXd,int>>& test_data) const;
+    int evaluate(const std::vector<Example>& test_data) const;
 
 private:
     template<class It>

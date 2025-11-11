@@ -34,25 +34,26 @@ int main()
         MnistReader reader(train_images, train_labels, test_images, test_labels);
         reader.load();
 
-        // Show the 5th training example as a sanity check
-        const auto& ex = reader.training()[4];
+        // Show examples
+        const auto& trX = reader.training()[4]; // 5th training example
         int label = 0;
-        ex.second.maxCoeff(&label);
-        reader.print(ex.first, label);
+        trX.second.maxCoeff(&label);
+        reader.print(trX.first, label);
 
-        // Show the 91st test example as a sanity check
-        auto [img, lbl] = reader.test()[90];
-        reader.print(img, lbl);
+        const auto& teX = reader.test()[90]; // 91st test example
+        teX.second.maxCoeff(&label);
+        reader.print(teX.first, label);
 
+        // Initialise network
         Network net({784, 30, 10}, act);
         auto train = reader.training();
 
         // Train and evaluate
         net.SGD(train, epochs, mini_batch_size, eta, &reader.test());
 
-
-        std::cout << argmax(net.feedforward(ex.first)) << std::endl;
-        std::cout << argmax(net.feedforward(img)) << std::endl;
+        // Apply trained network
+        std::cout << argmax(net.feedforward(trX.first)) << std::endl;
+        std::cout << argmax(net.feedforward(teX.first)) << std::endl;
 
         return 0;
     }
