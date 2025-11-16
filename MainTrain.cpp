@@ -53,11 +53,11 @@ void main_black_train()
     // Initialise a small network: 3 inputs -> 10 hidden units -> 1 output (sigma)
     Network net({3, 10, 1}, act);
 
-    // Copy training data into a modifiable vector for SGD
+    // Copy training data into a modifiable vector for SGD (SGD method makes in-place changes)
     std::vector<Network::Example> train(train_data.begin(), train_data.end());
 
     // Train and evaluate in regression mode
-    std::cout << "\nStarting training (Regression mode)...\n";
+    std::cout << "\nStarting training...\n";
     net.SGD(train, epochs, mini_batch_size, eta, &test_data, EvalMode::Regression);
 
     // Print network parameters
