@@ -23,6 +23,7 @@ add_library(NeuralNet_Lib
         VectorXdPairReader.cpp
         DataGenerator.cpp
         ReLU.h
+        Linear.h
 )
 
 target_link_libraries(NeuralNet_Lib

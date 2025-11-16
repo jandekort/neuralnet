@@ -7,7 +7,9 @@
 #include "VectorXdPairReader.h"
 #include "Sigmoid.h"
 #include "ReLU.h"
+#include "Linear.h"
 #include "Network.h"
+
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -17,13 +19,14 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs          = 30;
-    int    mini_batch_size = 10;
-    double eta             = 1.0;
+    int    epochs          = 100;
+    int    mini_batch_size = 512;
+    double eta             = 0.001;
 
     // Setup activation function
-    auto act = std::make_shared<Sigmoid>();
-    //auto act = std::make_shared<ReLU>();
+    //auto sigmoid = std::make_shared<Sigmoid>();
+    auto relu = std::make_shared<ReLU>();
+    auto linear = std::make_shared<Linear>();
 
     // Load the dataset
     VectorXdPairReader reader(dataset_path);
@@ -53,7 +56,7 @@ void main_black_train()
     reader.print(y0, 0, /*rows*/ 1, /*cols*/ y0.size());
 
     // Initialise network
-    Network net({3, 40, 40, 1}, act);
+    Network net({3, 100, 100, 100, 1}, relu, linear);
 
     // Copy training data into a modifiable vector for SGD (SGD method makes in-place changes)
     std::vector<Network::Example> train(train_data.begin(), train_data.end());

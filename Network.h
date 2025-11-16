@@ -68,7 +68,9 @@ public:
     using Example = std::pair<VectorXd, VectorXd>;
 
     Network(const std::vector<int>& sizes,
-            std::shared_ptr<const Activation> act = std::make_shared<Sigmoid>() );
+            std::shared_ptr<const Activation> hidden_act = std::make_shared<Sigmoid>(),
+            std::shared_ptr<const Activation> output_act = nullptr,
+            bool use_scaled_weight_init = true );
 
     VectorXd feedforward(const VectorXd& a0) const;
 
@@ -134,5 +136,6 @@ private:
     std::vector<int> sizes_;
     std::vector<VectorXd> biases_;
     std::vector<MatrixXd> weights_;
-    std::shared_ptr<const Activation> act_;
+    std::shared_ptr<const Activation> hidden_act_;  // for hidden layers
+    std::shared_ptr<const Activation> output_act_;  // for last layer
 };

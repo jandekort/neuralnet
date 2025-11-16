@@ -2,12 +2,21 @@
 
 RNG RNG_GLOBAL;
 
-Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation> act)
-    : num_layers_(static_cast<int>(sizes.size())),
-      sizes_(sizes),
-      act_(std::move(act))
+Network::Network(const std::vector<int> &sizes,
+                 std::shared_ptr<const Activation> hidden_act,
+                 std::shared_ptr<const Activation> output_act,
+                 bool use_scaled_weight_init)
+        : num_layers_(static_cast<int>(sizes.size())),
+          sizes_(sizes),
+          hidden_act_(std::move(hidden_act)),
+          output_act_(std::move(output_act))
 {
     if (num_layers_ < 2) throw std::invalid_argument("Need at least 2 layers");
+
+    if (!output_act_)
+    {
+        output_act_ = hidden_act_; // by default, use same activation for output as hidden
+    }
 
     // biases (no bias for input layer)
     for (int l = 1; l < num_layers_; ++l)
@@ -24,12 +33,22 @@ Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation
     {
         const int num_in = sizes_[l - 1];
 
+        double scale = 1.0;
+        if(l == num_layers_ - 1)
+        {
+            scale = output_act_->scaledWeight(num_in);
+        }
+        else
+        {
+            scale = hidden_act_->scaledWeight(num_in);
+        }
+
         MatrixXd w(sizes_[l], num_in);
         for (int r = 0; r < w.rows(); ++r)
         {
             for (int c = 0; c < w.cols(); ++c)
             {
-                w(r, c) = RNG_GLOBAL.gauss() * act_->scaledWeight(num_in);
+                w(r, c) = RNG_GLOBAL.gauss() * scale;
             }
         }
         weights_.push_back(std::move(w));
@@ -40,10 +59,19 @@ Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation
 VectorXd Network::feedforward(const VectorXd& a0) const
 {
     VectorXd a = a0;
-    for (size_t l = 0; l < weights_.size(); ++l)
+    const size_t L = weights_.size();
+
+    for (size_t l = 0; l < L; ++l)
     {
-        VectorXd z = weights_[l] * a + biases_[l]; // feedforward one layer
-        a = act_->f(z); // update all activations for layer l
+        VectorXd z = weights_[l] * a + biases_[l];
+        if (l + 1 == L)
+        {
+            a = output_act_->f(z); // output layer
+        }
+        else
+        {
+            a = hidden_act_->f(z); // hidden layer
+        }
     }
     return a;
 }
@@ -147,21 +175,34 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
 
     VectorXd a = x;
     activations.push_back(a);
-    for (size_t l = 0; l < weights_.size(); ++l)
+    const size_t L = weights_.size();
+    for (size_t l = 0; l < L; ++l)
     {
         VectorXd z = weights_[l] * a + biases_[l];
         zs.push_back(z);
-        a = act_->f(z);
+
+        if (l + 1 == L)
+        {
+            a = output_act_->f(z);
+        }
+        else
+        {
+            a = hidden_act_->f(z);
+        }
+
         activations.push_back(a);
     }
 
-    VectorXd delta = (activations.back() - y).cwiseProduct(act_->df(zs.back()));
+    // Output layer delta
+    VectorXd delta =
+            (activations.back() - y).cwiseProduct(output_act_->df(zs.back()));
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size()-2].transpose();
 
-    for (int l = static_cast<int>(weights_.size()) - 2; l >= 0; --l)
+    // Hidden layers (L-2 down to 0)
+    for (int l = static_cast<int>(L) - 2; l >= 0; --l)
     {
-        VectorXd sp = act_->df(zs[l]);
+        VectorXd sp = hidden_act_->df(zs[l]);
         delta = (weights_[l+1].transpose() * delta).cwiseProduct(sp);
         nabla_b[l] = delta;
         nabla_w[l] = delta * activations[l].transpose();
