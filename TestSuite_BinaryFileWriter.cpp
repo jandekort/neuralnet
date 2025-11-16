@@ -19,10 +19,10 @@ TEST(BinaryFileWriterReaderTest, WriteThenReadBack)
 
         // File header (just like the generator would write)
         w.write_tag("EXDS");
-        w.write_be_u32(2u);   // two sections: VALD and TEST
+        w.write_be_u32(2u);   // two sections: train and test
 
         // --- Section 1: VALD ---
-        w.write_tag("VALD");
+        w.write_tag("TRAI");
         w.write_be_u32(1u); // 1 example
         w.write_be_u32(3u); // input dimension
         w.write_be_u32(1u); // output dimension

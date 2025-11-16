@@ -6,6 +6,7 @@
 
 #include "VectorXdPairReader.h"
 #include "Sigmoid.h"
+#include "ReLU.h"
 #include "Network.h"
 
 using Eigen::MatrixXd;
@@ -22,6 +23,7 @@ void main_black_train()
 
     // Setup activation function
     auto act = std::make_shared<Sigmoid>();
+    //auto act = std::make_shared<ReLU>();
 
     // Load the dataset
     VectorXdPairReader reader(dataset_path);
@@ -50,8 +52,8 @@ void main_black_train()
     std::cout << "Example training target y (sigma):\n";
     reader.print(y0, 0, /*rows*/ 1, /*cols*/ y0.size());
 
-    // Initialise a small network: 3 inputs -> 10 hidden units -> 1 output (sigma)
-    Network net({3, 10, 1}, act);
+    // Initialise network
+    Network net({3, 40, 40, 1}, act);
 
     // Copy training data into a modifiable vector for SGD (SGD method makes in-place changes)
     std::vector<Network::Example> train(train_data.begin(), train_data.end());
@@ -74,9 +76,9 @@ void main_black_train()
         VectorXd y_pred = net.feedforward(x);
 
         std::cout << "Test example " << i << ":\n";
-        std::cout << "  true sigma  = " << y_true[0] << "\n";
-        std::cout << "  pred sigma  = " << y_pred[0] << "\n";
-        std::cout << "  abs error   = " << std::abs(y_pred[0] - y_true[0]) << "\n\n";
+        std::cout << "  true sigma       = " << y_true[0] << "\n";
+        std::cout << "  predicted sigma  = " << y_pred[0] << "\n";
+        std::cout << "  abs error        = " << std::abs(y_pred[0] - y_true[0]) << "\n\n";
     }
 }
 

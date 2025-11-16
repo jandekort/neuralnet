@@ -14,7 +14,6 @@ add_library(NeuralNet_Lib
         Network.h
         Activation.h
         IDataReader.h
-        Sigmoid.cpp
         Sigmoid.h
         MnistReader.cpp
         MnistReader.h
@@ -23,6 +22,7 @@ add_library(NeuralNet_Lib
         VectorXdPairReader.h
         VectorXdPairReader.cpp
         DataGenerator.cpp
+        ReLU.h
 )
 
 target_link_libraries(NeuralNet_Lib

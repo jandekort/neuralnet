@@ -15,7 +15,7 @@ TEST(MnistTest, FeedforwardMatchesManualComputation)
     auto act = std::make_shared<Sigmoid>();
 
     // 2-2-1 network: 2 inputs -> 2 hidden -> 1 output
-    Network net({2, 2, 1}, act, /*use_scaled_weight_init=*/false);
+    Network net({2, 2, 1}, act);
 
     // Manually set weights and biases to deterministic values.
     auto& biases  = net.biases();
@@ -57,7 +57,7 @@ TEST(MnistTest, BackpropGradientMatchesFiniteDifference)
 {
     auto act = std::make_shared<Sigmoid>();
 
-    Network net({2, 2, 1}, act, /*use_scaled_weight_init=*/false);
+    Network net({2, 2, 1}, act);
 
     auto& biases  = net.biases();
     auto& weights = net.weights();

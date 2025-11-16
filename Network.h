@@ -68,8 +68,7 @@ public:
     using Example = std::pair<VectorXd, VectorXd>;
 
     Network(const std::vector<int>& sizes,
-            std::shared_ptr<const Activation> act = std::make_shared<Sigmoid>(),
-            bool use_scaled_weight_init = true );
+            std::shared_ptr<const Activation> act = std::make_shared<Sigmoid>() );
 
     VectorXd feedforward(const VectorXd& a0) const;
 
@@ -136,5 +135,4 @@ private:
     std::vector<VectorXd> biases_;
     std::vector<MatrixXd> weights_;
     std::shared_ptr<const Activation> act_;
-    bool use_scaled_weight_init_;
 };

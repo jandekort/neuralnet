@@ -14,19 +14,19 @@ using Eigen::VectorXd;
 void main_generate()
 {
     const std::string out_path = "GeneratedData.bin";
-    const size_t n_val  = 1e6;
-    const size_t n_test = 1e6;
+    const size_t n_train = 9e5;
+    const size_t n_test  = 1e5;
     const uint64_t seed = 1;
 
     // Create training and test data using the generator
     DataGenerator gen(seed);
-    gen.generate_file(out_path, n_val, n_test);
+    gen.generate_file(out_path, n_train, n_test);
 
     std::cout << "Wrote " << out_path
-              << " with " << n_val << " validation examples and "
+              << " with " << n_train << " training examples and "
               << n_test << " test examples.\n";
 
-    // ---- Sanity check: read back using VectorXdPairReader ----
+    // Sanity check: read back using VectorXdPairReader
     try
     {
         VectorXdPairReader reader(out_path);

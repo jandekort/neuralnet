@@ -5,13 +5,13 @@ void DataGenerator::generate_file(const std::string &out_path, size_t n_validati
     BinaryFileWriter w(out_path);
 
     // File header
-    w.write_tag("EXDS");       // magic
-    w.write_be_u32(2u);        // 2 sections (VALD + TEST)
+    w.write_tag("EXDS");      // magic
+    w.write_be_u32(2u);        // 2 sections (train + test)
 
     auto val = make_examples(n_validation, in_dim, out_dim);
     auto tst = make_examples(n_test,       in_dim, out_dim);
 
-    write_section(w, "VALD", val, in_dim, out_dim);
+    write_section(w, "TRAI", val, in_dim, out_dim);
     write_section(w, "TEST", tst, in_dim, out_dim);
 }
 

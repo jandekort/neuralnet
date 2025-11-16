@@ -25,6 +25,11 @@ public:
     {
         return z.unaryExpr([](double v){ double a = s(v); return a*(1.0 - a); });
     }
+
+    double scaledWeight(int num_in) const override
+    {
+        return 1.0 / std::sqrt(static_cast<double>(num_in));
+    }
 };
 
 

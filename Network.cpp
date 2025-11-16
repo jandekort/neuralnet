@@ -2,11 +2,10 @@
 
 RNG RNG_GLOBAL;
 
-Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation> act, bool use_scaled_weight_init)
+Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation> act)
     : num_layers_(static_cast<int>(sizes.size())),
       sizes_(sizes),
-      act_(std::move(act)),
-      use_scaled_weight_init_(use_scaled_weight_init)
+      act_(std::move(act))
 {
     if (num_layers_ < 2) throw std::invalid_argument("Need at least 2 layers");
 
@@ -24,14 +23,13 @@ Network::Network(const std::vector<int> &sizes, std::shared_ptr<const Activation
     for (int l = 1; l < num_layers_; ++l)
     {
         const int num_in = sizes_[l - 1];
-        const double scale = use_scaled_weight_init_ ? (1.0 / std::sqrt(static_cast<double>(num_in))) : 1.0;
 
         MatrixXd w(sizes_[l], num_in);
         for (int r = 0; r < w.rows(); ++r)
         {
             for (int c = 0; c < w.cols(); ++c)
             {
-                w(r, c) = RNG_GLOBAL.gauss() * scale;
+                w(r, c) = RNG_GLOBAL.gauss() * act_->scaledWeight(num_in);
             }
         }
         weights_.push_back(std::move(w));

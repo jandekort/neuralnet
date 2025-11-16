@@ -9,8 +9,6 @@
 #include <Eigen/Dense>
 
 using Eigen::VectorXd;
-// NOTE: Example is already defined elsewhere as:
-// using Example = std::pair<VectorXd, VectorXd>;
 
 
 class VectorXdPairReader : public IDataReader

@@ -17,7 +17,7 @@ void VectorXdPairReader::load() {
 
     uint32_t n_sections = be_u32(f);
     if (n_sections != 2)
-        throw std::runtime_error("Expected 2 sections (VALD and TEST)");
+        throw std::runtime_error("Expected 2 sections");
 
     for (uint32_t s = 0; s < n_sections; ++s)
     {
@@ -45,7 +45,7 @@ void VectorXdPairReader::load() {
         }
 
         std::string stag(tag, 4);
-        if (stag == "VALD") {
+        if (stag == "TRAI") {
             training_ = std::move(bucket);
         } else if (stag == "TEST") {
             test_ = std::move(bucket);
