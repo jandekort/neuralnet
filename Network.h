@@ -43,6 +43,25 @@ static VectorXd std_basis_vec(int index, int size)
     return v;
 }
 
+enum class EvalMode
+{
+    Classification,
+    Regression
+};
+
+struct EvaluationResult
+{
+    EvalMode mode = EvalMode::Classification;
+
+    // Classification
+    int correct = 0;
+    int total   = 0;
+
+    // Regression
+    double mse  = 0.0;  // mean squared error
+    double mae  = 0.0;  // mean absolute error
+};
+
 class Network
 {
 public:
@@ -54,11 +73,19 @@ public:
 
     VectorXd feedforward(const VectorXd& a0) const;
 
-    void SGD(std::vector<Example>& training_data,
-             int epochs, int mini_batch_size, double eta,
-             const std::vector<Example>* test_data = nullptr);
+    void SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data = nullptr,
+             EvalMode eval_mode = EvalMode::Classification);
 
-    int evaluate(const std::vector<Example>& test_data) const;
+    EvaluationResult evaluate(const std::vector<Example>& test_data, EvalMode mode = EvalMode::Classification) const;
+
+    std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> backprop(const VectorXd& x, const VectorXd& y) const;
+
+    void print() const;
+
+    std::vector<VectorXd>& biases();
+    std::vector<MatrixXd>& weights();
+    const std::vector<VectorXd>& biases() const;
+    const std::vector<MatrixXd>& weights() const;
 
 private:
     template<class It>
@@ -102,8 +129,6 @@ private:
             biases_[l]  -= lr * nabla_b[l];
         }
     }
-
-    std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> backprop(const VectorXd& x, const VectorXd& y) const;
 
 private:
     int num_layers_;

@@ -14,24 +14,45 @@ add_library(NeuralNet_Lib
         Network.h
         Activation.h
         IDataReader.h
-        #Network.cpp
-        #Activation.cpp
-        #IDataReader.cpp
+        Sigmoid.cpp
+        Sigmoid.h
+        MnistReader.cpp
+        MnistReader.h
+        BinaryFileWriter.h
+        DataGenerator.h
+        VectorXdPairReader.h
+        VectorXdPairReader.cpp
+        DataGenerator.cpp
 )
 
 target_link_libraries(NeuralNet_Lib
         PUBLIC Eigen3::Eigen
 )
 
-# --------------------- Main Executable ---------------------
-add_executable(NeuralNet
-        main.cpp
-        Sigmoid.cpp
-        Sigmoid.h
-        MnistReader.cpp
-        MnistReader.h
+# --------------------- Main Executables ---------------------
+# Each of these has its own main() in its respective .cpp file.
+
+add_executable(MainMnist
+        MainMnist.cpp
 )
-target_link_libraries(NeuralNet
+
+target_link_libraries(MainMnist
+        PRIVATE NeuralNet_Lib
+)
+
+add_executable(MainGenerate
+        MainGenerate.cpp
+)
+
+target_link_libraries(MainGenerate
+        PRIVATE NeuralNet_Lib
+)
+
+add_executable(MainTrain
+        MainTrain.cpp
+)
+
+target_link_libraries(MainTrain
         PRIVATE NeuralNet_Lib
 )
 
@@ -47,6 +68,9 @@ enable_testing()
 
 # --------------------- Tests ---------------------
 add_executable(NeuralNet_Test
+        TestSuite_BinaryFileWriter.cpp
+        TestSuite_Mnist.cpp
+        TestSuite_Black.cpp
         TestSuite.cpp
 )
 
