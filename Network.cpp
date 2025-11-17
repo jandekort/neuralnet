@@ -4,8 +4,7 @@ RNG RNG_GLOBAL;
 
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
-                 std::shared_ptr<const Activation> output_act,
-                 bool use_scaled_weight_init)
+                 std::shared_ptr<const Activation> output_act )
         : num_layers_(static_cast<int>(sizes.size())),
           sizes_(sizes),
           hidden_act_(std::move(hidden_act)),
@@ -77,40 +76,42 @@ VectorXd Network::feedforward(const VectorXd& a0) const
 }
 
 void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data,
-                  EvalMode mode)
+                  EvalMode mode, double decay)
 {
     const int n = static_cast<int>(training_data.size());
 
-    for (int ep = 0; ep < epochs; ++ep)
+    double current_eta = eta;
+
+    for (int ep = 0; ep < epochs; ++ep) // every epoch loops through training data
     {
         RNG_GLOBAL.shuffle(training_data.begin(), training_data.end());
 
-        for (int k = 0; k < n; k += mini_batch_size)
+        for (int k = 0; k < n; k += mini_batch_size) // update weights and biases on every mini-batch
         {
             int end = std::min(n, k + mini_batch_size);
-            update_mini_batch(training_data.begin() + k, training_data.begin() + end, eta);
+            update_mini_batch(training_data.begin() + k, training_data.begin() + end, current_eta);
         }
 
-        if (test_data)
+        if (!test_data)
         {
-            EvaluationResult er = evaluate(*test_data, mode);
+            std::cout << "No test data for epoch " << ep << "\n";
+            continue;
+        }
 
-            switch (mode)
-            {
-                case EvalMode::Classification:
-                    std::cout << "Epoch " << ep << ": " << er.correct << " / " << er.total << "\n";
-                    break;
-                case EvalMode::Regression:
-                    std::cout << "Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae << "\n";
-                    break;
-                default:
-                    throw std::runtime_error("Unknown EvalMode in SGD");
-            }
-        }
-        else
+        EvaluationResult er = evaluate(*test_data, mode);
+        switch (mode)
         {
-            std::cout << "Epoch " << ep << " complete\n";
+            case EvalMode::Classification:
+                std::cout << "Epoch " << ep << ": " << er.correct << " / " << er.total << "\n";
+                break;
+            case EvalMode::Regression:
+                std::cout << "Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae << "\n";
+                break;
+            default:
+                throw std::runtime_error("Unknown EvalMode in SGD");
         }
+
+        current_eta *= decay; // decay learning rate after finishing the epoch
     }
 }
 

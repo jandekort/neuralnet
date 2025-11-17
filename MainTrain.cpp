@@ -20,8 +20,9 @@ void main_black_train()
 
     // Hyperparameters
     int    epochs          = 100;
-    int    mini_batch_size = 512;
-    double eta             = 0.001;
+    int    mini_batch_size = 1024;
+    double eta             = 0.0025;
+    double decay           = 0.98;
 
     // Setup activation function
     //auto sigmoid = std::make_shared<Sigmoid>();
@@ -63,7 +64,7 @@ void main_black_train()
 
     // Train and evaluate in regression mode
     std::cout << "\nStarting training...\n";
-    net.SGD(train, epochs, mini_batch_size, eta, &test_data, EvalMode::Regression);
+    net.SGD(train, epochs, mini_batch_size, eta, &test_data, EvalMode::Regression, decay);
 
     // Print network parameters
     net.print();

@@ -69,13 +69,12 @@ public:
 
     Network(const std::vector<int>& sizes,
             std::shared_ptr<const Activation> hidden_act = std::make_shared<Sigmoid>(),
-            std::shared_ptr<const Activation> output_act = nullptr,
-            bool use_scaled_weight_init = true );
+            std::shared_ptr<const Activation> output_act = nullptr );
 
     VectorXd feedforward(const VectorXd& a0) const;
 
     void SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data = nullptr,
-             EvalMode eval_mode = EvalMode::Classification);
+             EvalMode eval_mode = EvalMode::Classification, double decay = 1.0);
 
     EvaluationResult evaluate(const std::vector<Example>& test_data, EvalMode mode = EvalMode::Classification) const;
 
