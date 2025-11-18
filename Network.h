@@ -7,8 +7,20 @@
 #include "Activation.h"
 #include "Sigmoid.h"
 
+#define DEBUG 1 // 0: debug off, 1: debug on
+
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+
+inline void check_finite(const Eigen::Ref<const Eigen::VectorXd>& x, const char* msg)
+{
+    if (!x.array().isFinite().all())
+    {
+        std::ostringstream oss;
+        oss << "NaN/Inf detected in " << msg << "\n" << x;
+        throw std::runtime_error(oss.str());
+    }
+}
 
 struct RNG
 {
@@ -27,19 +39,17 @@ struct RNG
 
 extern RNG RNG_GLOBAL;
 
-// Utility functions
 static int argmax(const VectorXd& v)
 {
     Eigen::Index idx;
-    v.maxCoeff(&idx);
+    v.maxCoeff(&idx); // index of maximum coefficient in vec
     return static_cast<int>(idx);
 }
 
-// standard basis vector e_i
 static VectorXd std_basis_vec(int index, int size)
 {
     VectorXd v = VectorXd::Zero(size);
-    v(index) = 1.0;
+    v(index) = 1.0; // standard basis vector e_i
     return v;
 }
 
@@ -123,10 +133,15 @@ private:
         }
 
         double lr = eta / static_cast<double>(std::distance(begin, end));
+
         for (size_t l = 0; l < weights_.size(); ++l)
         {
             weights_[l] -= lr * nabla_w[l];
             biases_[l]  -= lr * nabla_b[l];
+
+#ifdef DEBUG
+            check_finite(weights_[l], "weights after update");
+#endif
         }
     }
 

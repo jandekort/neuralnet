@@ -63,6 +63,11 @@ VectorXd Network::feedforward(const VectorXd& a0) const
     for (size_t l = 0; l < L; ++l)
     {
         VectorXd z = weights_[l] * a + biases_[l];
+
+#ifdef DEBUG
+        check_finite(z, "feedforward() z pre-activation");
+#endif
+
         if (l + 1 == L)
         {
             a = output_act_->f(z); // output layer
@@ -71,6 +76,10 @@ VectorXd Network::feedforward(const VectorXd& a0) const
         {
             a = hidden_act_->f(z); // hidden layer
         }
+
+#ifdef DEBUG
+        check_finite(a, "feedforward() activation output");
+#endif
     }
     return a;
 }
@@ -117,11 +126,15 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
 
 EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMode mode) const
 {
+    const std::size_t count = test_data.size();
+    const double dcount = static_cast<double>(count);
+
     EvaluationResult res;
     res.mode  = mode;
-    res.total = static_cast<int>(test_data.size());
+    res.total = static_cast<int>(count);
 
-    if (test_data.empty()) {
+    if (test_data.empty())
+    {
         return res; // everything stays at 0
     }
 
@@ -137,7 +150,7 @@ EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMo
         }
         res.correct = correct;
     }
-    else // Regression
+    else if(mode == EvalMode::Regression)
     {
         double sum_sq = 0.0;
         double sum_abs = 0.0;
@@ -147,12 +160,16 @@ EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMo
             VectorXd y_pred = feedforward(x);
             VectorXd diff   = y_pred - y_true;
 
-            sum_sq  += diff.squaredNorm();
+            sum_sq  += diff.squaredNorm(); // total L2 norm over output vec
             sum_abs += diff.cwiseAbs().mean(); // average abs per output vec
         }
 
-        res.mse = sum_sq / static_cast<double>(test_data.size());
-        res.mae = sum_abs / static_cast<double>(test_data.size());
+        res.mse = sum_sq / dcount;
+        res.mae = sum_abs / dcount;
+    }
+    else
+    {
+        throw std::runtime_error("Unknown EvalMode");
     }
 
     return res;
@@ -182,6 +199,10 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
         VectorXd z = weights_[l] * a + biases_[l];
         zs.push_back(z);
 
+#ifdef DEBUG
+        check_finite(z, "backprop z");
+#endif
+
         if (l + 1 == L)
         {
             a = output_act_->f(z);
@@ -191,12 +212,15 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
             a = hidden_act_->f(z);
         }
 
+#ifdef DEBUG
+        check_finite(a, "backprop activation");
+#endif
+
         activations.push_back(a);
     }
 
     // Output layer delta
-    VectorXd delta =
-            (activations.back() - y).cwiseProduct(output_act_->df(zs.back()));
+    VectorXd delta = (activations.back() - y).cwiseProduct(output_act_->df(zs.back()));
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size()-2].transpose();
 
