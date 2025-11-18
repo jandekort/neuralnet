@@ -19,10 +19,10 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs          = 100;
+    int    epochs          = 200;
     int    mini_batch_size = 1024;
-    double eta             = 0.0025;
-    double decay           = 0.98;
+    double eta             = 0.0025; // largest eta (to avoid nan)
+    double decay           = 0.995;
 
     // Setup activation function
     //auto sigmoid = std::make_shared<Sigmoid>();
@@ -57,7 +57,7 @@ void main_black_train()
     reader.print(y0, 0, /*rows*/ 1, /*cols*/ y0.size());
 
     // Initialise network
-    Network net({3, 100, 100, 100, 1}, relu, linear);
+    Network net({3, 150, 150, 150, 1}, relu, linear);
 
     // Copy training data into a modifiable vector for SGD (SGD method makes in-place changes)
     std::vector<Network::Example> train(train_data.begin(), train_data.end());

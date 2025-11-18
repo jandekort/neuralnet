@@ -14,8 +14,8 @@ using Eigen::VectorXd;
 void main_generate()
 {
     const std::string out_path = "GeneratedData.bin";
-    const size_t n_train = 9e5;
-    const size_t n_test  = 1e5;
+    const size_t n_train = 150'000;
+    const size_t n_test  = 50'000;
     const uint64_t seed = 1;
 
     // Create training and test data using the generator

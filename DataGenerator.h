@@ -16,9 +16,9 @@ class DataGenerator {
 public:
     struct Ranges {
         double m_min = 0.5,   m_max = 1.4;   // moneyness F/K
-        double tau_min = 0.05, tau_max = 10.0; // maturity (years)
+        double tau_min = 0.05, tau_max = 1.0; // maturity (years)
         double r_min = 0.0,    r_max = 0.10;  // interest rate
-        double sig_min = 0.01, sig_max = 0.80;// volatility
+        double sig_min = 0.05, sig_max = 1.0;// volatility
     };
 
 public:
