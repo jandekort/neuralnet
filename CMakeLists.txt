@@ -26,6 +26,8 @@ add_library(NeuralNet_Lib
         DataGenerator.cpp
         ReLU.h
         Linear.h
+        DataNormalizer.cpp
+        DataNormalizer.h
 )
 
 target_link_libraries(NeuralNet_Lib

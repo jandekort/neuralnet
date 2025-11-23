@@ -9,7 +9,7 @@
 #include "ReLU.h"
 #include "Linear.h"
 #include "Network.h"
-
+#include "DataNormalizer.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -19,9 +19,9 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs          = 200;
+    int    epochs          = 150;
     int    mini_batch_size = 1024;
-    double eta             = 0.0025; // largest eta (to avoid nan)
+    double eta             = 0.005; // largest eta (to avoid nan)
     double decay           = 0.995;
 
     // Setup activation function
@@ -56,33 +56,44 @@ void main_black_train()
     std::cout << "Example training target y (sigma):\n";
     reader.print(y0, 0, /*rows*/ 1, /*cols*/ y0.size());
 
-    // Initialise network
-    Network net({3, 150, 150, 150, 1}, relu, linear);
-
     // Copy training data into a modifiable vector for SGD (SGD method makes in-place changes)
     std::vector<Network::Example> train(train_data.begin(), train_data.end());
+    std::vector<Network::Example> test(test_data.begin(), test_data.end());
 
-    // Train and evaluate in regression mode
+    StandardScalerNormalizer normalizer;
+    normalizer.fit(train); // compute means/stds from training set
+    normalizer.transform_dataset_inplace(train); // normalize training data
+    normalizer.transform_dataset_inplace(test);  // normalize test data
+
+    // Initialise network
+    Network net({3, 400, 400, 400, 1}, relu, linear);
+
+    // Train and evaluate in regression mode on NORMALIZED data
     std::cout << "\nStarting training...\n";
-    net.SGD(train, epochs, mini_batch_size, eta, &test_data, EvalMode::Regression, decay);
+    net.SGD(train, epochs, mini_batch_size, eta, &test, EvalMode::Regression, decay);
 
     // Print network parameters
     net.print();
 
-    // Evaluate a few test examples
+    // Evaluate a few test examples (denormalize predictions + targets)
     std::cout << "\nSample predictions on test data:\n";
-    for (size_t i = 0; i < std::min<size_t>(5, test_data.size()); ++i)
+    for (size_t i = 0; i < std::min<size_t>(5, test.size()); ++i)
     {
-        const auto& ex = test_data[i];
-        const VectorXd& x = ex.first;
-        const VectorXd& y_true = ex.second;
+        const auto& ex_norm = test[i];
+        const VectorXd& x_norm     = ex_norm.first;
+        const VectorXd& y_true_norm = ex_norm.second;
 
-        VectorXd y_pred = net.feedforward(x);
+        // Predict in normalized space
+        VectorXd y_pred_norm = net.feedforward(x_norm);
+
+        // Denormalize both prediction and target for reporting
+        VectorXd y_pred_raw = normalizer.inverse_transform_output(y_pred_norm);
+        VectorXd y_true_raw = normalizer.inverse_transform_output(y_true_norm);
 
         std::cout << "Test example " << i << ":\n";
-        std::cout << "  true sigma       = " << y_true[0] << "\n";
-        std::cout << "  predicted sigma  = " << y_pred[0] << "\n";
-        std::cout << "  abs error        = " << std::abs(y_pred[0] - y_true[0]) << "\n\n";
+        std::cout << "  true sigma       = " << y_true_raw[0] << "\n";
+        std::cout << "  predicted sigma  = " << y_pred_raw[0] << "\n";
+        std::cout << "  abs error        = " << std::abs(y_pred_raw[0] - y_true_raw[0]) << "\n\n";
     }
 }
 
