@@ -10,7 +10,10 @@ Network::Network(const std::vector<int> &sizes,
           output_act_(std::move(output_act)),
           cost_(std::move(cost))
 {
-    if (num_layers_ < 2) throw std::invalid_argument("Need at least 2 layers");
+    if (num_layers_ < 2)
+    {
+        throw std::invalid_argument("Need at least 2 layers");
+    }
 
     if (!output_act_)
     {
@@ -210,8 +213,9 @@ EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMo
             sum_abs += diff.cwiseAbs().mean(); // average abs per output vec
         }
 
-        res.mse = sum_sq / dcount;
-        res.mae = sum_abs / dcount;
+        const double out_dim = static_cast<double>(sizes_.back());
+        res.mse = sum_sq / (dcount * out_dim); // overall mean of the sum of squared errors per element (per output)
+        res.mae = sum_abs / dcount; // overall mean absolute error per element (per output)
     }
     else
     {
