@@ -1,7 +1,5 @@
 #include "Network.h"
 
-RNG RNG_GLOBAL;
-
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
                  std::shared_ptr<const Activation> output_act )
@@ -23,7 +21,7 @@ Network::Network(const std::vector<int> &sizes,
         VectorXd b(sizes_[l]);
         for (int i = 0; i < b.size(); ++i)
         {
-            b(i) = RNG_GLOBAL.gauss();
+            b(i) = rng_.gauss();
         }
         biases_.push_back(std::move(b));
     }
@@ -47,7 +45,7 @@ Network::Network(const std::vector<int> &sizes,
         {
             for (int c = 0; c < w.cols(); ++c)
             {
-                w(r, c) = RNG_GLOBAL.gauss() * scale;
+                w(r, c) = rng_.gauss() * scale;
             }
         }
         weights_.push_back(std::move(w));
@@ -93,7 +91,7 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
 
     for (int ep = 0; ep < epochs; ++ep) // every epoch loops through training data
     {
-        RNG_GLOBAL.shuffle(training_data.begin(), training_data.end());
+        rng_.shuffle(training_data.begin(), training_data.end());
 
         for (int k = 0; k < n; k += mini_batch_size) // update weights and biases on every mini-batch
         {

@@ -37,8 +37,6 @@ struct RNG
     }
 };
 
-extern RNG RNG_GLOBAL;
-
 static int argmax(const VectorXd& v)
 {
     Eigen::Index idx;
@@ -152,4 +150,5 @@ private:
     std::vector<MatrixXd> weights_;
     std::shared_ptr<const Activation> hidden_act_;  // for hidden layers
     std::shared_ptr<const Activation> output_act_;  // for last layer
+    RNG rng_;  // Random number generator (non-global, thread-safe)
 };
