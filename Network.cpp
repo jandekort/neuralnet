@@ -2,11 +2,13 @@
 
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
-                 std::shared_ptr<const Activation> output_act )
+                 std::shared_ptr<const Activation> output_act,
+                 const Cost* cost)
         : num_layers_(static_cast<int>(sizes.size())),
           sizes_(sizes),
           hidden_act_(std::move(hidden_act)),
-          output_act_(std::move(output_act))
+          output_act_(std::move(output_act)),
+          cost_(cost)
 {
     if (num_layers_ < 2) throw std::invalid_argument("Need at least 2 layers");
 
@@ -122,6 +124,52 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
     }
 }
 
+void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta)
+{
+    std::vector<VectorXd> nabla_b(biases_.size());
+    std::vector<MatrixXd> nabla_w(weights_.size());
+    for (size_t l = 0; l < nabla_b.size(); ++l)
+    {
+        nabla_b[l] = VectorXd::Zero(biases_[l].size());
+    }
+    for (size_t l = 0; l < nabla_w.size(); ++l)
+    {
+        nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+    }
+
+    for (auto it = begin; it != end; ++it)
+    {
+        const VectorXd& x = it->first;
+        const VectorXd& y = it->second;
+
+        std::vector<VectorXd> dnb;
+        std::vector<MatrixXd> dnw;
+
+        std::tie(dnb, dnw) = backprop(x, y); // compute per-example gradients using backpropagation
+
+        for (size_t l = 0; l < nabla_b.size(); ++l)
+        {
+            nabla_b[l] += dnb[l]; // accumulate gradients in mini batch
+        }
+        for (size_t l = 0; l < nabla_w.size(); ++l)
+        {
+            nabla_w[l] += dnw[l]; // accumulate gradients in mini batch
+        }
+    }
+
+    double lr = eta / static_cast<double>(std::distance(begin, end));
+
+    for (size_t l = 0; l < weights_.size(); ++l)
+    {
+        weights_[l] -= lr * nabla_w[l];
+        biases_[l]  -= lr * nabla_b[l];
+
+#ifdef DEBUG
+        check_finite(weights_[l], "weights after update");
+#endif
+    }
+}
+
 EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMode mode) const
 {
     const std::size_t count = test_data.size();
@@ -217,8 +265,8 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
         activations.push_back(a);
     }
 
-    // Output layer delta
-    VectorXd delta = (activations.back() - y).cwiseProduct(output_act_->df(zs.back()));
+    // Output layer delta (uses cost function's delta method)
+    VectorXd delta = cost_->delta(zs.back(), activations.back(), y, output_act_.get());
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size()-2].transpose();
 

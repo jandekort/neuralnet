@@ -6,6 +6,7 @@
 #include <iostream>
 #include "Activation.h"
 #include "Sigmoid.h"
+#include "Cost.h"
 
 #define DEBUG 1 // 0: debug off, 1: debug on
 
@@ -77,7 +78,8 @@ public:
 
     Network(const std::vector<int>& sizes,
             std::shared_ptr<const Activation> hidden_act = std::make_shared<Sigmoid>(),
-            std::shared_ptr<const Activation> output_act = nullptr );
+            std::shared_ptr<const Activation> output_act = nullptr,
+            const Cost* cost = &MSE_COST);
 
     VectorXd feedforward(const VectorXd& a0) const;
 
@@ -96,52 +98,7 @@ public:
     const std::vector<MatrixXd>& weights() const;
 
 private:
-    template<class It>
-    void update_mini_batch(It begin, It end, double eta)
-    {
-        std::vector<VectorXd> nabla_b(biases_.size());
-        std::vector<MatrixXd> nabla_w(weights_.size());
-        for (size_t l = 0; l < nabla_b.size(); ++l)
-        {
-            nabla_b[l] = VectorXd::Zero(biases_[l].size());
-        }
-        for (size_t l = 0; l < nabla_w.size(); ++l)
-        {
-            nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
-        }
-
-        for (auto it = begin; it != end; ++it)
-        {
-            const VectorXd& x = it->first;
-            const VectorXd& y = it->second;
-
-            std::vector<VectorXd> dnb;
-            std::vector<MatrixXd> dnw;
-
-            std::tie(dnb, dnw) = backprop(x, y); // compute per-example gradients using backpropagation
-
-            for (size_t l = 0; l < nabla_b.size(); ++l)
-            {
-                nabla_b[l] += dnb[l]; // accumulate gradients in mini batch
-            }
-            for (size_t l = 0; l < nabla_w.size(); ++l)
-            {
-                nabla_w[l] += dnw[l]; // accumulate gradients in mini batch
-            }
-        }
-
-        double lr = eta / static_cast<double>(std::distance(begin, end));
-
-        for (size_t l = 0; l < weights_.size(); ++l)
-        {
-            weights_[l] -= lr * nabla_w[l];
-            biases_[l]  -= lr * nabla_b[l];
-
-#ifdef DEBUG
-            check_finite(weights_[l], "weights after update");
-#endif
-        }
-    }
+    void update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
 
 private:
     int num_layers_;
@@ -150,5 +107,6 @@ private:
     std::vector<MatrixXd> weights_;
     std::shared_ptr<const Activation> hidden_act_;  // for hidden layers
     std::shared_ptr<const Activation> output_act_;  // for last layer
+    const Cost* cost_;  // Cost function for training
     RNG rng_;  // Random number generator (non-global, thread-safe)
 };

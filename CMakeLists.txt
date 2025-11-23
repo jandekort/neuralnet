@@ -13,6 +13,8 @@ add_library(NeuralNet_Lib
         Network.cpp
         Network.h
         Activation.h
+        Cost.h
+        Cost.cpp
         IDataReader.h
         Sigmoid.h
         MnistReader.cpp
