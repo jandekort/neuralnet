@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <memory>
 
 class Activation;
 class Sigmoid;
@@ -23,7 +24,7 @@ public:
     // y: true label/value
     // output_act: activation function used in output layer
     virtual VectorXd delta(const VectorXd& z, const VectorXd& a, const VectorXd& y,
-                           const Activation* output_act) const = 0;
+                           const Activation& output_act) const = 0;
 };
 
 // Mean Squared Error (compatible with ANY differentiable activation)
@@ -35,7 +36,7 @@ public:
 
     // Delta: δ^L = (a - y) * σ'(z)    // elementwise multiplication
     VectorXd delta(const VectorXd& z, const VectorXd& a, const VectorXd& y,
-                   const Activation* output_act) const override;
+                   const Activation& output_act) const override;
 };
 
 // Cross-entropy WITH sigmoid output
@@ -47,9 +48,8 @@ public:
 
     // δ^L = a - y  (valid if output activation is Sigmoid)
     VectorXd delta(const VectorXd& z, const VectorXd& a, const VectorXd& y,
-                   const Activation* output_act) const override;
+                   const Activation& output_act) const override;
 };
 
-// Global cost function instances
-extern const MSECost                 MSE_COST;
-extern const SigmoidCrossEntropyCost SIGMOID_CE_COST;
+inline const std::shared_ptr<const Cost> MSE_COST = std::make_shared<MSECost>();
+inline const std::shared_ptr<const Cost> SIGMOID_CE_COST = std::make_shared<SigmoidCrossEntropyCost>();

@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <random>
 #include <iostream>
+#include <memory>
 #include "Activation.h"
 #include "Sigmoid.h"
 #include "Cost.h"
@@ -79,7 +80,7 @@ public:
     Network(const std::vector<int>& sizes,
             std::shared_ptr<const Activation> hidden_act = std::make_shared<Sigmoid>(),
             std::shared_ptr<const Activation> output_act = nullptr,
-            const Cost* cost = &MSE_COST);
+            std::shared_ptr<const Cost> cost = MSE_COST);
 
     VectorXd feedforward(const VectorXd& a0) const;
 
@@ -107,6 +108,6 @@ private:
     std::vector<MatrixXd> weights_;
     std::shared_ptr<const Activation> hidden_act_;  // for hidden layers
     std::shared_ptr<const Activation> output_act_;  // for last layer
-    const Cost* cost_;  // Cost function for training
-    RNG rng_;  // Random number generator (non-global, thread-safe)
+    std::shared_ptr<const Cost> cost_;  // cost function for training
+    RNG rng_;  // random number generator
 };

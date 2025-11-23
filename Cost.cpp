@@ -20,14 +20,9 @@ double MSECost::fn(const VectorXd& a, const VectorXd& y) const
 }
 
 VectorXd MSECost::delta(const VectorXd& z, const VectorXd& a, const VectorXd& y,
-                        const Activation* output_act) const
+                        const Activation& output_act) const
 {
-    if (!output_act)
-    {
-        throw std::logic_error("MSECost::delta requires a non-null output activation.");
-    }
-
-    return (a - y).cwiseProduct(output_act->df(z));
+    return (a - y).cwiseProduct(output_act.df(z));
 }
 
 double SigmoidCrossEntropyCost::fn(const VectorXd& a, const VectorXd& y) const
@@ -45,19 +40,16 @@ double SigmoidCrossEntropyCost::fn(const VectorXd& a, const VectorXd& y) const
 }
 
 VectorXd SigmoidCrossEntropyCost::delta(const VectorXd& z, const VectorXd& a, const VectorXd& y,
-                                        const Activation* output_act) const
+                                        const Activation& output_act) const
 {
-    const Sigmoid* sigmoid_act = dynamic_cast<const Sigmoid*>(output_act);
+    const Sigmoid* sigmoid_act = dynamic_cast<const Sigmoid*>(&output_act);
     if (!sigmoid_act)
     {
         std::ostringstream oss;
         oss << "SigmoidCrossEntropyCost::delta requires output activation of type Sigmoid, but got ";
-        oss << (!output_act ? "nullptr" : typeid(*output_act).name() );
+        oss << typeid(output_act).name();
         throw std::logic_error(oss.str());
     }
 
     return a - y;
 }
-
-const MSECost                 MSE_COST;
-const SigmoidCrossEntropyCost SIGMOID_CE_COST;

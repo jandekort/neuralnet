@@ -3,12 +3,12 @@
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
                  std::shared_ptr<const Activation> output_act,
-                 const Cost* cost)
+                 std::shared_ptr<const Cost> cost)
         : num_layers_(static_cast<int>(sizes.size())),
           sizes_(sizes),
           hidden_act_(std::move(hidden_act)),
           output_act_(std::move(output_act)),
-          cost_(cost)
+          cost_(std::move(cost))
 {
     if (num_layers_ < 2) throw std::invalid_argument("Need at least 2 layers");
 
@@ -266,7 +266,7 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
     }
 
     // Output layer delta (uses cost function's delta method)
-    VectorXd delta = cost_->delta(zs.back(), activations.back(), y, output_act_.get());
+    VectorXd delta = cost_->delta(zs.back(), activations.back(), y, *output_act_);
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size()-2].transpose();
 
