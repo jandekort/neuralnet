@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Activation.h"
+#include <cmath>
 
 class Sigmoid : public Activation
 {
@@ -26,9 +27,11 @@ public:
         return z.unaryExpr([](double v){ double a = s(v); return a*(1.0 - a); });
     }
 
-    double scaledWeight(int num_in) const override
+    double initWeight(RNG& rng, int num_in) const override
     {
-        return 1.0 / std::sqrt(static_cast<double>(num_in));
+        // Xavier/Glorot Normal initialization: N(0, 1/sqrt(num_in))
+        const double scale = 1.0 / std::sqrt(static_cast<double>(num_in));
+        return rng.gauss() * scale;
     }
 };
 

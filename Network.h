@@ -2,9 +2,9 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <random>
 #include <iostream>
 #include <memory>
+#include "RNG.h"
 #include "Activation.h"
 #include "Sigmoid.h"
 #include "Cost.h"
@@ -23,21 +23,6 @@ inline void check_finite(const Eigen::Ref<const Eigen::VectorXd>& x, const char*
         throw std::runtime_error(oss.str());
     }
 }
-
-struct RNG
-{
-    std::mt19937 gen{std::random_device{}()};
-    std::normal_distribution<double> normal{0.0, 1.0};
-    template<typename It>
-    void shuffle(It first, It last)
-    {
-        std::shuffle(first, last, gen);
-    }
-    double gauss()
-    {
-        return normal(gen);
-    }
-};
 
 static int argmax(const VectorXd& v)
 {

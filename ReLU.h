@@ -2,6 +2,7 @@
 
 #include "Activation.h"
 #include <algorithm>
+#include <cmath>
 
 class ReLU : public Activation
 {
@@ -16,8 +17,10 @@ public:
         return z.unaryExpr([](double v){ return v > 0.0 ? 1.0 : 0.0; });
     }
 
-    double scaledWeight(int num_in) const override
+    double initWeight(RNG& rng, int num_in) const override
     {
-        return std::sqrt(2.0 / static_cast<double>(num_in));
+        // He Uniform initialization: U(-limit, limit) where limit = sqrt(6 / num_in)
+        const double limit = std::sqrt(6.0 / static_cast<double>(num_in));
+        return rng.uniform(-limit, limit);
     }
 };

@@ -35,22 +35,14 @@ Network::Network(const std::vector<int> &sizes,
     {
         const int num_in = sizes_[l - 1];
 
-        double scale = 1.0;
-        if(l == num_layers_ - 1)
-        {
-            scale = output_act_->scaledWeight(num_in);
-        }
-        else
-        {
-            scale = hidden_act_->scaledWeight(num_in);
-        }
+        const Activation* act = (l == num_layers_ - 1) ? output_act_.get() : hidden_act_.get();
 
         MatrixXd w(sizes_[l], num_in);
         for (int r = 0; r < w.rows(); ++r)
         {
             for (int c = 0; c < w.cols(); ++c)
             {
-                w(r, c) = rng_.gauss() * scale;
+                w(r, c) = act->initWeight(rng_, num_in);
             }
         }
         weights_.push_back(std::move(w));
