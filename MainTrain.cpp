@@ -19,10 +19,10 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs          = 150;
-    int    mini_batch_size = 1024;
-    double eta             = 0.005; // largest eta (to avoid nan)
-    double decay           = 0.995;
+    int    epochs           = 150;
+    int    mini_batch_size  = 1024*8;
+    double eta              = 0.0006; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
+    double decay            = 0.999;
 
     // Setup activation function
     //auto sigmoid = std::make_shared<Sigmoid>();
@@ -66,18 +66,18 @@ void main_black_train()
     normalizer.transform_dataset_inplace(test);  // normalize test data
 
     // Initialise network
-    Network net({3, 400, 400, 400, 1}, relu, linear);
+    Network net({3, 300, 300, 300, 1}, relu, linear);
 
     // Train and evaluate in regression mode on NORMALIZED data
     std::cout << "\nStarting training...\n";
-    net.SGD(train, epochs, mini_batch_size, eta, &test, EvalMode::Regression, decay);
+    net.SGD(train, epochs, mini_batch_size, eta, &test, EvalMode::Regression, decay, Optimizer::Adam);
 
     // Print network parameters
-    net.print();
+    //net.print();
 
     // Evaluate a few test examples (denormalize predictions + targets)
     std::cout << "\nSample predictions on test data:\n";
-    for (size_t i = 0; i < std::min<size_t>(5, test.size()); ++i)
+    for (size_t i = 0; i < std::min<size_t>(100, test.size()); ++i)
     {
         const auto& ex_norm = test[i];
         const VectorXd& x_norm     = ex_norm.first;
@@ -90,10 +90,10 @@ void main_black_train()
         VectorXd y_pred_raw = normalizer.inverse_transform_output(y_pred_norm);
         VectorXd y_true_raw = normalizer.inverse_transform_output(y_true_norm);
 
-        std::cout << "Test example " << i << ":\n";
-        std::cout << "  true sigma       = " << y_true_raw[0] << "\n";
-        std::cout << "  predicted sigma  = " << y_pred_raw[0] << "\n";
-        std::cout << "  abs error        = " << std::abs(y_pred_raw[0] - y_true_raw[0]) << "\n\n";
+        std::cout << "Test example " << i;
+        std::cout << ": true sigma = " << y_true_raw[0] ;
+        std::cout << ", predicted sigma = " << y_pred_raw[0] ;
+        std::cout << ", abs error = " << std::abs(y_pred_raw[0] - y_true_raw[0]) << "\n";
     }
 }
 

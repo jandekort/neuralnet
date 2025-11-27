@@ -44,6 +44,12 @@ enum class EvalMode
     Regression
 };
 
+enum class Optimizer
+{
+    SGD,
+    Adam
+};
+
 struct EvaluationResult
 {
     EvalMode mode = EvalMode::Classification;
@@ -69,8 +75,15 @@ public:
 
     VectorXd feedforward(const VectorXd& a0) const;
 
-    void SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data = nullptr,
-             EvalMode eval_mode = EvalMode::Classification, double decay = 1.0);
+    void SGD(std::vector<Example>& training_data,
+             int   epochs,
+             int   mini_batch_size,
+             double eta,
+             const std::vector<Example>* test_data = nullptr,
+             EvalMode eval_mode = EvalMode::Classification,
+             double decay = 1.0,
+             Optimizer optimizer = Optimizer::SGD);
+
 
     EvaluationResult evaluate(const std::vector<Example>& test_data, EvalMode mode = EvalMode::Classification) const;
 
@@ -85,6 +98,7 @@ public:
 
 private:
     void update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
+    void update_mini_batch_adam(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
 
 private:
     int num_layers_;
@@ -95,4 +109,11 @@ private:
     std::shared_ptr<const Activation> output_act_;  // for last layer
     std::shared_ptr<const Cost> cost_;  // cost function for training
     RNG rng_;  // random number generator
+
+    std::vector<MatrixXd> m_w_;  // Adam: first moment (weights)
+    std::vector<MatrixXd> v_w_;  // Adam: second moment (weights)
+    std::vector<VectorXd> m_b_;  // Adam: first moment (biases)
+    std::vector<VectorXd> v_b_;  // Adam: second moment (biases)
+    int adam_t_ = 0;             // Adam: global Adam time step (for bias correction)
+
 };

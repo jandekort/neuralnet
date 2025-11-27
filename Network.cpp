@@ -47,6 +47,22 @@ Network::Network(const std::vector<int> &sizes,
         }
         weights_.push_back(std::move(w));
     }
+
+    // Initialize Adam moment vectors to zero with same shapes as weights/biases
+    m_w_.resize(weights_.size());
+    v_w_.resize(weights_.size());
+    m_b_.resize(biases_.size());
+    v_b_.resize(biases_.size());
+
+    for (size_t l = 0; l < weights_.size(); ++l)
+    {
+        m_w_[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+        v_w_[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+        m_b_[l] = VectorXd::Zero(biases_[l].size());
+        v_b_[l] = VectorXd::Zero(biases_[l].size());
+    }
+
+    adam_t_ = 0;
 }
 
 
@@ -80,7 +96,7 @@ VectorXd Network::feedforward(const VectorXd& a0) const
 }
 
 void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data,
-                  EvalMode mode, double decay)
+                  EvalMode mode, double decay, Optimizer optimizer )
 {
     const int n = static_cast<int>(training_data.size());
 
@@ -93,7 +109,19 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
         for (int k = 0; k < n; k += mini_batch_size) // update weights and biases on every mini-batch
         {
             int end = std::min(n, k + mini_batch_size);
-            update_mini_batch(training_data.begin() + k, training_data.begin() + end, current_eta);
+
+            if (optimizer == Optimizer::SGD)
+            {
+                update_mini_batch(training_data.begin() + k,
+                                  training_data.begin() + end,
+                                  current_eta);
+            }
+            else // Optimizer::Adam
+            {
+                update_mini_batch_adam(training_data.begin() + k,
+                                       training_data.begin() + end,
+                                       current_eta);
+            }
         }
 
         if (!test_data)
@@ -103,6 +131,7 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
         }
 
         EvaluationResult er = evaluate(*test_data, mode);
+
         switch (mode)
         {
             case EvalMode::Classification:
@@ -162,6 +191,92 @@ void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vecto
 #ifdef DEBUG
         check_finite(weights_[l], "weights after update");
 #endif
+    }
+}
+
+void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
+                                     std::vector<Example>::iterator end,
+                                     double eta)
+{
+    // 1) Accumulate gradients over the mini-batch (exactly like update_mini_batch)
+    std::vector<VectorXd> nabla_b(biases_.size());
+    std::vector<MatrixXd> nabla_w(weights_.size());
+
+    for (size_t l = 0; l < biases_.size(); ++l)
+    {
+        nabla_b[l] = VectorXd::Zero(biases_[l].size());
+    }
+    for (size_t l = 0; l < weights_.size(); ++l)
+    {
+        nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+    }
+
+    for (auto it = begin; it != end; ++it)
+    {
+        const VectorXd& x = it->first;
+        const VectorXd& y = it->second;
+
+        std::vector<VectorXd> dnb;
+        std::vector<MatrixXd> dnw;
+        std::tie(dnb, dnw) = backprop(x, y);
+
+        for (size_t l = 0; l < nabla_b.size(); ++l)
+        {
+            nabla_b[l] += dnb[l];
+        }
+
+        for (size_t l = 0; l < nabla_w.size(); ++l)
+        {
+            nabla_w[l] += dnw[l];
+        }
+    }
+
+    // 2) Compute average gradient for the batch
+    const double batch_size = static_cast<double>(std::distance(begin, end));
+
+    std::vector<VectorXd> g_b(nabla_b.size());
+    std::vector<MatrixXd> g_w(nabla_w.size());
+
+    for (size_t l = 0; l < nabla_b.size(); ++l)
+    {
+        g_b[l] = nabla_b[l] / batch_size;
+    }
+
+    for (size_t l = 0; l < nabla_w.size(); ++l)
+    {
+        g_w[l] = nabla_w[l] / batch_size;
+    }
+
+    // 3) Adam hyperparameters
+    const double beta1 = 0.9;
+    const double beta2 = 0.999;
+    const double eps   = 1e-8;
+
+    // 4) Increment timestep (global across training)
+    ++adam_t_;
+    const double beta1_t = std::pow(beta1, adam_t_);
+    const double beta2_t = std::pow(beta2, adam_t_);
+
+    // 5) Update moments and apply Adam step
+    for (size_t l = 0; l < weights_.size(); ++l)
+    {
+        // weights moments
+        m_w_[l] = beta1 * m_w_[l] + (1.0 - beta1) * g_w[l];
+        v_w_[l] = beta2 * v_w_[l] + (1.0 - beta2) * g_w[l].cwiseProduct(g_w[l]);
+
+        MatrixXd m_hat_w = m_w_[l] / (1.0 - beta1_t);
+        MatrixXd v_hat_w = v_w_[l] / (1.0 - beta2_t);
+
+        weights_[l].array() -= eta * m_hat_w.array() / (v_hat_w.array().sqrt() + eps);
+
+        // biases moments
+        m_b_[l] = beta1 * m_b_[l] + (1.0 - beta1) * g_b[l];
+        v_b_[l] = beta2 * v_b_[l] + (1.0 - beta2) * g_b[l].cwiseProduct(g_b[l]);
+
+        VectorXd m_hat_b = m_b_[l] / (1.0 - beta1_t);
+        VectorXd v_hat_b = v_b_[l] / (1.0 - beta2_t);
+
+        biases_[l].array()  -= eta * m_hat_b.array() / (v_hat_b.array().sqrt() + eps);
     }
 }
 
