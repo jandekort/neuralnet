@@ -1,4 +1,5 @@
 #include "Network.h"
+#include <fstream>
 
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
@@ -428,4 +429,102 @@ const std::vector<VectorXd>& Network::biases() const
 const std::vector<MatrixXd>& Network::weights() const
 {
     return weights_;
+}
+
+void Network::load(const std::string& path)
+{
+    std::ifstream in(path);
+    if (!in)
+    {
+        throw std::runtime_error("Cannot open " + path);
+    }
+
+    int n_layers;
+    in >> n_layers;
+    std::vector<int> sizes(n_layers);
+    for (int i = 0; i < n_layers; ++i)
+    {
+        in >> sizes[i];
+    }
+
+    weights_.clear();
+    biases_.clear();
+
+    // weights
+    for (auto& W : weights_)
+    {
+        int rows, cols;
+        in >> rows >> cols;
+        if (rows != W.rows() || cols != W.cols())
+        {
+            throw std::runtime_error("Dimension mismatch in weight matrix");
+        }
+        for (int r = 0; r < rows; ++r)
+        {
+            for (int c = 0; c < cols; ++c)
+            {
+                in >> W(r,c);
+            }
+        }
+
+    }
+
+    // biases
+    for (auto& b : biases_)
+    {
+        int n;
+        in >> n;
+        if (n != b.size())
+        {
+            throw std::runtime_error("Dimension mismatch in bias vector");
+        }
+        for (int i = 0; i < n; ++i)
+        {
+            in >> b(i);
+        }
+    }
+}
+
+void Network::save(const std::string& path)
+{
+    std::ofstream out(path);
+    if (!out)
+    {
+        throw std::runtime_error("Cannot open " + path);
+    }
+
+    out << std::setprecision(17);
+
+    // 1) architecture
+    out << sizes_.size() << "\n";
+    for (int s : sizes_)
+    {
+        out << s << " ";
+    }
+    out << "\n";
+
+    // 2) weights
+    for (const auto& W : weights_)
+    {
+        out << W.rows() << " " << W.cols() << "\n";
+        for (int r = 0; r < W.rows(); ++r)
+        {
+            for (int c = 0; c < W.cols(); ++c)
+            {
+                out << W(r,c) << " ";
+            }
+            out << "\n";
+        }
+    }
+
+    // 3) biases
+    for (const auto& b : biases_)
+    {
+        out << b.size() << "\n";
+        for (int i = 0; i < b.size(); ++i)
+        {
+            out << b(i) << " ";
+        }
+        out << "\n";
+    }
 }

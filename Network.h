@@ -96,6 +96,9 @@ public:
     const std::vector<VectorXd>& biases() const;
     const std::vector<MatrixXd>& weights() const;
 
+    void load(const std::string& path);
+    void save(const std::string& path);
+
 private:
     void update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
     void update_mini_batch_adam(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);

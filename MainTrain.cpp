@@ -20,8 +20,8 @@ void main_black_train()
 
     // Hyperparameters
     int    epochs           = 150;
-    int    mini_batch_size  = 1024*8;
-    double eta              = 0.0006; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
+    int    mini_batch_size  = 1024;
+    double eta              = 0.002; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
     double decay            = 0.999;
 
     // Setup activation function
@@ -74,6 +74,9 @@ void main_black_train()
 
     // Print network parameters
     //net.print();
+
+    // Save network parameters
+    net.save("net.txt");
 
     // Evaluate a few test examples (denormalize predictions + targets)
     std::cout << "\nSample predictions on test data:\n";
