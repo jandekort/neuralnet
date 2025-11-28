@@ -69,6 +69,19 @@ Network::Network(const std::vector<int> &sizes,
 
 VectorXd Network::feedforward(const VectorXd& a0) const
 {
+#ifdef DEBUG
+    // Validate input dimension (only in debug builds for performance)
+    const int expected_input_dim = sizes_.front();
+    if (a0.size() != expected_input_dim)
+    {
+        throw std::invalid_argument(
+            "feedforward() input dimension mismatch: network expects " +
+            std::to_string(expected_input_dim) + " inputs but got " +
+            std::to_string(a0.size())
+        );
+    }
+#endif
+
     VectorXd a = a0;
     const size_t L = weights_.size();
 
@@ -96,9 +109,50 @@ VectorXd Network::feedforward(const VectorXd& a0) const
     return a;
 }
 
+void Network::validate_dataset_dimensions(const std::vector<Example>& data, const std::string& dataset_name) const
+{
+    if (data.empty())
+    {
+        return; // Nothing to validate
+    }
+
+    const int expected_input_dim = sizes_.front();
+    const int expected_output_dim = sizes_.back();
+
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        const VectorXd& x = data[i].first;
+        const VectorXd& y = data[i].second;
+
+        if (x.size() != expected_input_dim)
+        {
+            throw std::invalid_argument(
+                dataset_name + " input dimension mismatch at example " + std::to_string(i) +
+                ": network expects " + std::to_string(expected_input_dim) +
+                " inputs but got " + std::to_string(x.size())
+            );
+        }
+
+        if (y.size() != expected_output_dim)
+        {
+            throw std::invalid_argument(
+                dataset_name + " output dimension mismatch at example " + std::to_string(i) +
+                ": network expects " + std::to_string(expected_output_dim) +
+                " outputs but got " + std::to_string(y.size())
+            );
+        }
+    }
+}
+
 void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data,
                   EvalMode mode, double decay, Optimizer optimizer )
 {
+    validate_dataset_dimensions(training_data, "Training data");
+    if (test_data)
+    {
+        validate_dataset_dimensions(*test_data, "Test data");
+    }
+
     const int n = static_cast<int>(training_data.size());
 
     double current_eta = eta;

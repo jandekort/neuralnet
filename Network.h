@@ -9,7 +9,7 @@
 #include "Sigmoid.h"
 #include "Cost.h"
 
-#define DEBUG 1 // 0: debug off, 1: debug on
+#define DEBUG 0 // 0: debug off, 1: debug on
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -102,6 +102,7 @@ public:
 private:
     void update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
     void update_mini_batch_adam(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta);
+    void validate_dataset_dimensions(const std::vector<Example>& data, const std::string& dataset_name) const;
 
 private:
     int num_layers_;

@@ -40,7 +40,7 @@ std::vector<Example> DataGenerator::make_examples(size_t n, uint32_t in_dim, uin
     std::uniform_real_distribution<double> U_sig(ranges_.sig_min, ranges_.sig_max);
 
     const double K = 1.0;
-    const double eps_tv = 1e-12;
+    const double eps_tv = 1e-7;
 
     std::vector<Example> out;
     out.reserve(n);
@@ -66,6 +66,7 @@ std::vector<Example> DataGenerator::make_examples(size_t n, uint32_t in_dim, uin
         x[0] = std::log(Vtilde / K);
         x[1] = F / K;
         x[2] = tau;
+        x[3] = r;
 
         VectorXd y(out_dim);
         y[0] = sigma;

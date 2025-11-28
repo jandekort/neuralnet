@@ -29,7 +29,7 @@ public:
             : rng_(seed), ranges_(Ranges{}) {}
 
     // Generate and write a binary dataset containing validation + test sets
-    void generate_file(const std::string& out_path, size_t n_validation, size_t n_test, uint32_t in_dim = 3, uint32_t out_dim = 1);
+    void generate_file(const std::string& out_path, size_t n_validation, size_t n_test, uint32_t in_dim = 4, uint32_t out_dim = 1);
 
     // Produce a vector of Example objects
     std::vector<Example> make_examples(size_t n, uint32_t in_dim, uint32_t out_dim);
