@@ -1,5 +1,19 @@
 #include "Network.h"
 #include <fstream>
+#include <chrono>
+#include <iomanip>
+#include <ctime>
+
+namespace
+{
+    std::string timestamp()
+    {
+        std::time_t t = std::time(nullptr);
+        char buf[20];
+        std::strftime(buf, sizeof(buf), "%H:%M:%S", std::localtime(&t));
+        return std::string("[") + buf + "] ";
+    }
+}
 
 Network::Network(const std::vector<int> &sizes,
                  std::shared_ptr<const Activation> hidden_act,
@@ -202,10 +216,10 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
         switch (mode)
         {
             case EvalMode::Classification:
-                std::cout << "Epoch " << ep << ": " << er.correct << " / " << er.total;
+                std::cout << timestamp() << " Epoch " << ep << ": " << er.correct << " / " << er.total;
                 break;
             case EvalMode::Regression:
-                std::cout << "Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae;
+                std::cout << timestamp() << " Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae;
                 break;
             default:
                 throw std::runtime_error("Unknown EvalMode in SGD");
