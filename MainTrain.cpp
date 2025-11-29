@@ -76,7 +76,7 @@ void main_black_train()
     //net.print();
 
     // Save network parameters
-    net.save("net.txt");
+    net.save("best_net.txt");
 
     // Evaluate a few test examples (denormalize predictions + targets)
     std::cout << "\nSample predictions on test data:\n";

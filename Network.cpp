@@ -145,7 +145,7 @@ void Network::validate_dataset_dimensions(const std::vector<Example>& data, cons
 }
 
 void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data,
-                  EvalMode mode, double decay, Optimizer optimizer )
+                  EvalMode mode, double decay, Optimizer optimizer)
 {
     validate_dataset_dimensions(training_data, "Training data");
     if (test_data)
@@ -156,6 +156,11 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
     const int n = static_cast<int>(training_data.size());
 
     double current_eta = eta;
+
+    // Checkpointing: track best evaluation and best network
+    EvaluationResult best_eval;
+    best_eval.mode = mode;
+    Network best_net = *this; // copy current network as initial best
 
     for (int ep = 0; ep < epochs; ++ep) // every epoch loops through training data
     {
@@ -186,20 +191,45 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
         }
 
         EvaluationResult er = evaluate(*test_data, mode);
+        er.epoch = ep;
 
         switch (mode)
         {
             case EvalMode::Classification:
-                std::cout << "Epoch " << ep << ": " << er.correct << " / " << er.total << "\n";
+                std::cout << "Epoch " << ep << ": " << er.correct << " / " << er.total;
                 break;
             case EvalMode::Regression:
-                std::cout << "Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae << "\n";
+                std::cout << "Epoch " << ep << ": " << "MSE=" << er.mse << ", MAE=" << er.mae;
                 break;
             default:
                 throw std::runtime_error("Unknown EvalMode in SGD");
         }
 
+        // Check if current evaluation is better than best
+        if (er < best_eval)
+        {
+            best_eval = er;
+            best_net = *this; // save current network as best
+            std::cout << " , New best";
+        }
+
+        std::cout << "\n";
+
         current_eta *= decay; // decay learning rate after finishing the epoch
+    }
+
+    // Restore best network
+    *this = best_net;
+
+    std::cout << "\nTraining complete. Best model from epoch " << best_eval.epoch << ":\n";
+    switch (mode)
+    {
+        case EvalMode::Classification:
+            std::cout << "  Accuracy: " << best_eval.correct << " / " << best_eval.total << "\n";
+            break;
+        case EvalMode::Regression:
+            std::cout << "  MSE=" << best_eval.mse << ", MAE=" << best_eval.mae << "\n";
+            break;
     }
 }
 

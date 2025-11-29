@@ -8,8 +8,10 @@
 #include "Activation.h"
 #include "Sigmoid.h"
 #include "Cost.h"
+#include "EvaluationResult.h"
 
 #define DEBUG 0 // 0: debug off, 1: debug on
+#define BEST_NET_PATH "best_net.txt"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -38,29 +40,10 @@ static VectorXd std_basis_vec(int index, int size)
     return v;
 }
 
-enum class EvalMode
-{
-    Classification,
-    Regression
-};
-
 enum class Optimizer
 {
     SGD,
     Adam
-};
-
-struct EvaluationResult
-{
-    EvalMode mode = EvalMode::Classification;
-
-    // Classification
-    int correct = 0;
-    int total   = 0;
-
-    // Regression
-    double mse  = 0.0;  // mean squared error
-    double mae  = 0.0;  // mean absolute error
 };
 
 class Network
