@@ -6,32 +6,32 @@
 
 class Sigmoid : public Activation
 {
-    static inline double s(double z)
+    static inline float s(float z)
     {
         if (z >= 0)
         {
-            double e = std::exp(-z); return 1.0 / (1.0 + e);
+            float e = std::exp(-z); return 1.0f / (1.0f + e);
         }
         else
         {
-            double e = std::exp(z);  return e / (1.0 + e);
+            float e = std::exp(z);  return e / (1.0f + e);
         }
     }
 public:
-    VectorXd f(const VectorXd& z) const override
+    VectorXf f(const VectorXf& z) const override
     {
-        return z.unaryExpr([](double v){ return s(v); });
+        return z.unaryExpr([](float v){ return s(v); });
     }
-    VectorXd df(const VectorXd& z) const override
+    VectorXf df(const VectorXf& z) const override
     {
-        return z.unaryExpr([](double v){ double a = s(v); return a*(1.0 - a); });
+        return z.unaryExpr([](float v){ float a = s(v); return a*(1.0f - a); });
     }
 
-    double initWeight(RNG& rng, int num_in) const override
+    float initWeight(RNG& rng, int num_in) const override
     {
         // Xavier/Glorot Normal initialization: N(0, 1/sqrt(num_in))
-        const double scale = 1.0 / std::sqrt(static_cast<double>(num_in));
-        return rng.gauss() * scale;
+        const float scale = 1.0f / std::sqrt(static_cast<float>(num_in));
+        return static_cast<float>(rng.gauss()) * scale;
     }
 };
 

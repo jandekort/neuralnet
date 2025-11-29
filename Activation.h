@@ -4,15 +4,15 @@
 #include <Eigen/Dense>
 #include "RNG.h"
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using Eigen::MatrixXf;
+using Eigen::VectorXf;
 
 class Activation
 {
 public:
     virtual ~Activation() = default;
-    virtual VectorXd f(const VectorXd& z) const = 0;   // activation function
-    virtual VectorXd df(const VectorXd& z) const = 0;  // derivative wrt z
+    virtual VectorXf f(const VectorXf& z) const = 0;   // activation function
+    virtual VectorXf df(const VectorXf& z) const = 0;  // derivative wrt z
 
-    virtual double initWeight(RNG& rng, int num_in) const = 0; // random weight initialisation
+    virtual float initWeight(RNG& rng, int num_in) const = 0; // random weight initialisation
 };

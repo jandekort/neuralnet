@@ -40,7 +40,7 @@ void MnistReader::load()
     }
 }
 
-std::vector<VectorXd> MnistReader::load_images(const std::string& path)
+std::vector<VectorXf> MnistReader::load_images(const std::string& path)
 {
     std::ifstream f(path, std::ios::binary);
     if (!f) throw std::runtime_error("open images failed: " + path);
@@ -48,12 +48,12 @@ std::vector<VectorXd> MnistReader::load_images(const std::string& path)
     uint32_t num = be_u32(f), rows = be_u32(f), cols = be_u32(f);
     uint32_t dim = rows*cols;
 
-    std::vector<VectorXd> out; out.reserve(num);
+    std::vector<VectorXf> out; out.reserve(num);
     std::vector<uint8_t> buf(dim);
     for (uint32_t i=0;i<num;++i) {
         f.read(reinterpret_cast<char*>(buf.data()), dim);
-        VectorXd v(dim);
-        for (uint32_t j=0;j<dim;++j) v(j) = double(buf[j]) / 255.0;
+        VectorXf v(dim);
+        for (uint32_t j=0;j<dim;++j) v(j) = float(buf[j]) / 255.0f;
         out.push_back(std::move(v));
     }
     return out;
@@ -72,7 +72,7 @@ std::vector<int> MnistReader::load_labels(const std::string& path)
 }
 
 
-void MnistReader::print(const VectorXd& img, int label, int rows, int cols)
+void MnistReader::print(const VectorXf& img, int label, int rows, int cols)
 {
     static const char* shades = " .:-=+*#%@";   // 10 gradations of intensity
 

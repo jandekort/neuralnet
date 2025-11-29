@@ -7,20 +7,20 @@
 class ReLU : public Activation
 {
 public:
-    VectorXd f(const VectorXd& z) const override
+    VectorXf f(const VectorXf& z) const override
     {
-        return z.unaryExpr([](double v){ return std::max(0.0, v); });
+        return z.unaryExpr([](float v){ return std::max(0.0f, v); });
     }
 
-    VectorXd df(const VectorXd& z) const override
+    VectorXf df(const VectorXf& z) const override
     {
-        return z.unaryExpr([](double v){ return v > 0.0 ? 1.0 : 0.0; });
+        return z.unaryExpr([](float v){ return v > 0.0f ? 1.0f : 0.0f; });
     }
 
-    double initWeight(RNG& rng, int num_in) const override
+    float initWeight(RNG& rng, int num_in) const override
     {
         // He Uniform initialization: U(-limit, limit) where limit = sqrt(6 / num_in)
-        const double limit = std::sqrt(6.0 / static_cast<double>(num_in));
-        return rng.uniform(-limit, limit);
+        const float limit = std::sqrt(6.0f / static_cast<float>(num_in));
+        return static_cast<float>(rng.uniform(-limit, limit));
     }
 };

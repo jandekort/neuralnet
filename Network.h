@@ -13,10 +13,11 @@
 #define DEBUG 0 // 0: debug off, 1: debug on
 #define BEST_NET_PATH "best_net.txt"
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using Eigen::MatrixXf;
+using Eigen::VectorXf;
 
-inline void check_finite(const Eigen::Ref<const Eigen::VectorXd>& x, const char* msg)
+template<typename Derived>
+inline void check_finite(const Eigen::MatrixBase<Derived>& x, const char* msg)
 {
     if (!x.array().isFinite().all())
     {
@@ -26,17 +27,17 @@ inline void check_finite(const Eigen::Ref<const Eigen::VectorXd>& x, const char*
     }
 }
 
-static int argmax(const VectorXd& v)
+static int argmax(const VectorXf& v)
 {
     Eigen::Index idx;
     v.maxCoeff(&idx); // index of maximum coefficient in vec
     return static_cast<int>(idx);
 }
 
-static VectorXd std_basis_vec(int index, int size)
+static VectorXf std_basis_vec(int index, int size)
 {
-    VectorXd v = VectorXd::Zero(size);
-    v(index) = 1.0; // standard basis vector e_i
+    VectorXf v = VectorXf::Zero(size);
+    v(index) = 1.0f; // standard basis vector e_i
     return v;
 }
 
@@ -49,14 +50,14 @@ enum class Optimizer
 class Network
 {
 public:
-    using Example = std::pair<VectorXd, VectorXd>;
+    using Example = std::pair<VectorXf, VectorXf>;
 
     Network(const std::vector<int>& sizes,
             std::shared_ptr<const Activation> hidden_act = std::make_shared<Sigmoid>(),
             std::shared_ptr<const Activation> output_act = nullptr,
             std::shared_ptr<const Cost> cost = MSE_COST);
 
-    VectorXd feedforward(const VectorXd& a0) const;
+    VectorXf feedforward(const VectorXf& a0) const;
 
     void SGD(std::vector<Example>& training_data,
              int   epochs,
@@ -70,14 +71,14 @@ public:
 
     EvaluationResult evaluate(const std::vector<Example>& test_data, EvalMode mode = EvalMode::Classification) const;
 
-    std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> backprop(const VectorXd& x, const VectorXd& y) const;
+    std::pair<std::vector<VectorXf>, std::vector<MatrixXf>> backprop(const VectorXf& x, const VectorXf& y) const;
 
     void print() const;
 
-    std::vector<VectorXd>& biases();
-    std::vector<MatrixXd>& weights();
-    const std::vector<VectorXd>& biases() const;
-    const std::vector<MatrixXd>& weights() const;
+    std::vector<VectorXf>& biases();
+    std::vector<MatrixXf>& weights();
+    const std::vector<VectorXf>& biases() const;
+    const std::vector<MatrixXf>& weights() const;
 
     void load(const std::string& path);
     void save(const std::string& path);
@@ -90,17 +91,17 @@ private:
 private:
     int num_layers_;
     std::vector<int> sizes_;
-    std::vector<VectorXd> biases_;
-    std::vector<MatrixXd> weights_;
+    std::vector<VectorXf> biases_;
+    std::vector<MatrixXf> weights_;
     std::shared_ptr<const Activation> hidden_act_;  // for hidden layers
     std::shared_ptr<const Activation> output_act_;  // for last layer
     std::shared_ptr<const Cost> cost_;  // cost function for training
     RNG rng_;  // random number generator
 
-    std::vector<MatrixXd> m_w_;  // Adam: first moment (weights)
-    std::vector<MatrixXd> v_w_;  // Adam: second moment (weights)
-    std::vector<VectorXd> m_b_;  // Adam: first moment (biases)
-    std::vector<VectorXd> v_b_;  // Adam: second moment (biases)
+    std::vector<MatrixXf> m_w_;  // Adam: first moment (weights)
+    std::vector<MatrixXf> v_w_;  // Adam: second moment (weights)
+    std::vector<VectorXf> m_b_;  // Adam: first moment (biases)
+    std::vector<VectorXf> v_b_;  // Adam: second moment (biases)
     int adam_t_ = 0;             // Adam: global Adam time step (for bias correction)
 
 };

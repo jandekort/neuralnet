@@ -6,8 +6,8 @@
 #include "BinaryFileWriter.h"
 #include "VectorXdPairReader.h"
 
-using Eigen::VectorXd;
-using Example = std::pair<VectorXd, VectorXd>;
+using Eigen::VectorXf;
+using Example = std::pair<VectorXf, VectorXf>;
 
 
 TEST(BinaryFileWriterReaderTest, WriteThenReadBack)
@@ -61,31 +61,31 @@ TEST(BinaryFileWriterReaderTest, WriteThenReadBack)
     // Validate VALD example
     {
         const Example& ex = vald[0];
-        const VectorXd& x = ex.first;
-        const VectorXd& y = ex.second;
+        const VectorXf& x = ex.first;
+        const VectorXf& y = ex.second;
 
         ASSERT_EQ(x.size(), 3);
         ASSERT_EQ(y.size(), 1);
 
-        EXPECT_DOUBLE_EQ(x[0], 1.0);
-        EXPECT_DOUBLE_EQ(x[1], 2.0);
-        EXPECT_DOUBLE_EQ(x[2], 3.0);
-        EXPECT_DOUBLE_EQ(y[0], 0.5);
+        EXPECT_FLOAT_EQ(x[0], 1.0f);
+        EXPECT_FLOAT_EQ(x[1], 2.0f);
+        EXPECT_FLOAT_EQ(x[2], 3.0f);
+        EXPECT_FLOAT_EQ(y[0], 0.5f);
     }
 
     // Validate TEST example
     {
         const Example& ex = test[0];
-        const VectorXd& x = ex.first;
-        const VectorXd& y = ex.second;
+        const VectorXf& x = ex.first;
+        const VectorXf& y = ex.second;
 
         ASSERT_EQ(x.size(), 3);
         ASSERT_EQ(y.size(), 1);
 
-        EXPECT_DOUBLE_EQ(x[0], 9.0);
-        EXPECT_DOUBLE_EQ(x[1], 8.0);
-        EXPECT_DOUBLE_EQ(x[2], 7.0);
-        EXPECT_DOUBLE_EQ(y[0], 0.1);
+        EXPECT_FLOAT_EQ(x[0], 9.0f);
+        EXPECT_FLOAT_EQ(x[1], 8.0f);
+        EXPECT_FLOAT_EQ(x[2], 7.0f);
+        EXPECT_FLOAT_EQ(y[0], 0.1f);
     }
 
     // ----- 5) Cleanup -----

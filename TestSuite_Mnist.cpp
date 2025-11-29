@@ -6,8 +6,9 @@
 #include "BinaryFileWriter.h"
 #include "VectorXdPairReader.h"
 
-using Eigen::VectorXd;
-using Example = std::pair<VectorXd, VectorXd>;
+using Eigen::VectorXf;
+using Eigen::MatrixXf;
+using Example = std::pair<VectorXf, VectorXf>;
 
 
 TEST(MnistTest, FeedforwardMatchesManualComputation)
@@ -24,29 +25,29 @@ TEST(MnistTest, FeedforwardMatchesManualComputation)
     biases.clear();
     weights.clear();
 
-    biases.push_back(Eigen::VectorXd(2));
-    biases[0] << 0.1, -0.2;           // hidden layer biases
+    biases.push_back(Eigen::VectorXf(2));
+    biases[0] << 0.1f, -0.2f;           // hidden layer biases
 
-    biases.push_back(Eigen::VectorXd(1));
-    biases[1] << 0.05;                // output layer bias
+    biases.push_back(Eigen::VectorXf(1));
+    biases[1] << 0.05f;                // output layer bias
 
-    weights.push_back(Eigen::MatrixXd(2, 2));
-    weights[0] << 0.5, -0.3, 0.8,  0.2;          // input -> hidden
+    weights.push_back(Eigen::MatrixXf(2, 2));
+    weights[0] << 0.5f, -0.3f, 0.8f,  0.2f;          // input -> hidden
 
-    weights.push_back(Eigen::MatrixXd(1, 2));
-    weights[1] << -0.7, 0.9;          // hidden -> output
+    weights.push_back(Eigen::MatrixXf(1, 2));
+    weights[1] << -0.7f, 0.9f;          // hidden -> output
 
     // Input vector
-    Eigen::VectorXd x(2);
-    x << 0.4, 0.6;
+    Eigen::VectorXf x(2);
+    x << 0.4f, 0.6f;
 
     // Manual computation: a1 = σ(W1 x + b1), a2 = σ(W2 a1 + b2)
-    Eigen::VectorXd z1 = weights[0] * x + biases[0];
-    Eigen::VectorXd a1 = act->f(z1);
-    Eigen::VectorXd z2 = weights[1] * a1 + biases[1];
-    Eigen::VectorXd a2 = act->f(z2);
+    Eigen::VectorXf z1 = weights[0] * x + biases[0];
+    Eigen::VectorXf a1 = act->f(z1);
+    Eigen::VectorXf z2 = weights[1] * a1 + biases[1];
+    Eigen::VectorXf a2 = act->f(z2);
 
-    Eigen::VectorXd out = net.feedforward(x);
+    Eigen::VectorXf out = net.feedforward(x);
 
     ASSERT_EQ(out.size(), 1);
     EXPECT_NEAR(out(0), a2(0), 1e-10);
@@ -66,29 +67,29 @@ TEST(MnistTest, BackpropGradientMatchesFiniteDifference)
     biases.clear();
     weights.clear();
 
-    biases.push_back(Eigen::VectorXd(2));
-    biases[0] << 0.1, -0.2;
+    biases.push_back(Eigen::VectorXf(2));
+    biases[0] << 0.1f, -0.2f;
 
-    biases.push_back(Eigen::VectorXd(1));
-    biases[1] << 0.05;
+    biases.push_back(Eigen::VectorXf(1));
+    biases[1] << 0.05f;
 
-    weights.push_back(Eigen::MatrixXd(2, 2));
-    weights[0] << 0.5, -0.3,
-            0.8,  0.2;
+    weights.push_back(Eigen::MatrixXf(2, 2));
+    weights[0] << 0.5f, -0.3f,
+            0.8f,  0.2f;
 
-    weights.push_back(Eigen::MatrixXd(1, 2));
-    weights[1] << -0.7, 0.9;
+    weights.push_back(Eigen::MatrixXf(1, 2));
+    weights[1] << -0.7f, 0.9f;
 
     // A single training example (x, y) — like a tiny "MNIST" with 2 pixels and 1 output.
-    Eigen::VectorXd x(2);
-    x << 0.4, 0.6;
+    Eigen::VectorXf x(2);
+    x << 0.4f, 0.6f;
 
-    Eigen::VectorXd y(1);
-    y << 1.0;  // target "label"
+    Eigen::VectorXf y(1);
+    y << 1.0f;  // target "label"
 
     // Analytical gradient via backprop.
-    std::vector<Eigen::VectorXd> nabla_b;
-    std::vector<Eigen::MatrixXd> nabla_w;
+    std::vector<Eigen::VectorXf> nabla_b;
+    std::vector<Eigen::MatrixXf> nabla_w;
     std::tie(nabla_b, nabla_w) = net.backprop(x, y);
 
     // We'll check the gradient w.r.t. a single weight, e.g. weights[1](0,0).
@@ -96,29 +97,29 @@ TEST(MnistTest, BackpropGradientMatchesFiniteDifference)
     const int row   = 0;
     const int col   = 0;
 
-    double base_weight = weights[layer](row, col);
-    const double eps = 1e-5;
+    float base_weight = weights[layer](row, col);
+    const float eps = 1e-3f;  // Use larger epsilon for float precision (vs 1e-5 for double)
 
     auto cost = [&](const Network& net)
     {
-        Eigen::VectorXd a = net.feedforward(x);
-        return 0.5 * (a - y).squaredNorm();
+        Eigen::VectorXf a = net.feedforward(x);
+        return 0.5f * (a - y).squaredNorm();
     };
 
     // Numerical gradient using central difference:
     // (C(w+eps) - C(w-eps)) / (2*eps)
     weights[layer](row, col) = base_weight + eps;
-    double cost_up = cost(net);
+    float cost_up = cost(net);
 
     weights[layer](row, col) = base_weight - eps;
-    double cost_down = cost(net);
+    float cost_down = cost(net);
 
     // Restore parameter
     weights[layer](row, col) = base_weight;
 
-    double numerical_grad = (cost_up - cost_down) / (2.0 * eps);
-    double backprop_grad  = nabla_w[layer](row, col);
+    float numerical_grad = (cost_up - cost_down) / (2.0f * eps);
+    float backprop_grad  = nabla_w[layer](row, col);
 
-    // Reasonable tolerance – backprop and finite differences should be very close.
-    EXPECT_NEAR(backprop_grad, numerical_grad, 1e-4);
+    // Tolerance adjusted for float precision
+    EXPECT_NEAR(backprop_grad, numerical_grad, 1e-4f);
 }

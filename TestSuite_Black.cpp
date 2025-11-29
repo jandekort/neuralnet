@@ -7,8 +7,8 @@
 #include "VectorXdPairReader.h"
 #include "DataGenerator.h"
 
-using Eigen::VectorXd;
-using Example = std::pair<VectorXd, VectorXd>;
+using Eigen::VectorXf;
+using Example = std::pair<VectorXf, VectorXf>;
 
 
 
@@ -23,14 +23,14 @@ TEST(BlackTest, MakeExamplesTest)
 
     DataGenerator gen(1234, r);
 
-    const uint32_t in_dim = 3;
+    const uint32_t in_dim = 4;
     const uint32_t out_dim = 1;
 
     auto examples = gen.make_examples(1, in_dim, out_dim);
     ASSERT_EQ(examples.size(), 1);
 
-    const VectorXd& x = examples[0].first;
-    const VectorXd& y = examples[0].second;
+    const VectorXf& x = examples[0].first;
+    const VectorXf& y = examples[0].second;
 
     // Basic dimension checks
     EXPECT_EQ(x.size(), in_dim);
@@ -49,11 +49,12 @@ TEST(BlackTest, MakeExamplesTest)
     const double intrinsic_disc = std::exp(-rate * tau) * std::max(F - K, 0.0);
     const double Vtilde = V - intrinsic_disc;
 
-    // Check output y
-    EXPECT_NEAR(y[0], sigma, 1e-12);
+    // Check output y (use float-appropriate tolerance)
+    EXPECT_NEAR(y[0], sigma, 1e-6);
 
-    // Check input x = [log(Vtilde/K), F/K, tau]
-    EXPECT_NEAR(x[0], std::log(Vtilde / K), 1e-12);
-    EXPECT_NEAR(x[1], F / K, 1e-12);
-    EXPECT_NEAR(x[2], tau, 1e-12);
+    // Check input x = [log(Vtilde/K), F/K, tau, r] (use float-appropriate tolerance)
+    EXPECT_NEAR(x[0], std::log(Vtilde / K), 1e-6);
+    EXPECT_NEAR(x[1], F / K, 1e-6);
+    EXPECT_NEAR(x[2], tau, 1e-6);
+    EXPECT_NEAR(x[3], rate, 1e-6);
 }

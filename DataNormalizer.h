@@ -26,7 +26,7 @@ public:
     virtual void transform_dataset_inplace(std::vector<Example>& data) const = 0;
 
     // Undo normalization for an output vector (sigma prediction)
-    virtual Eigen::VectorXd inverse_transform_output(const Eigen::VectorXd& y_norm) const = 0;
+    virtual Eigen::VectorXf inverse_transform_output(const Eigen::VectorXf& y_norm) const = 0;
 };
 
 
@@ -40,14 +40,14 @@ public:
     void fit(const std::vector<Example>& training_data) override;
     void transform_inplace(Example& ex) const override;
     void transform_dataset_inplace(std::vector<Example>& data) const override;
-    Eigen::VectorXd inverse_transform_output(const Eigen::VectorXd& y_norm) const override;
+    Eigen::VectorXf inverse_transform_output(const Eigen::VectorXf& y_norm) const override;
 
 private:
     bool fitted_ = false;
-    Eigen::VectorXd input_mean_;
-    Eigen::VectorXd input_std_;
-    Eigen::VectorXd output_mean_;
-    Eigen::VectorXd output_std_;
+    Eigen::VectorXf input_mean_;
+    Eigen::VectorXf input_std_;
+    Eigen::VectorXf output_mean_;
+    Eigen::VectorXf output_std_;
 
     void check_fitted() const;
 };

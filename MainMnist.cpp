@@ -10,8 +10,8 @@
 #include "Sigmoid.h"
 #include "Network.h"
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using Eigen::MatrixXf;
+using Eigen::VectorXf;
 
 
 void main_mnist()

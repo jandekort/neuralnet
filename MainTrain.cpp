@@ -11,8 +11,8 @@
 #include "Network.h"
 #include "DataNormalizer.h"
 
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using Eigen::MatrixXf;
+using Eigen::VectorXf;
 
 void main_black_train()
 {
@@ -47,8 +47,8 @@ void main_black_train()
 
     // Show a preview example
     const auto& ex0 = train_data[0];
-    const VectorXd& x0 = ex0.first;
-    const VectorXd& y0 = ex0.second;
+    const VectorXf& x0 = ex0.first;
+    const VectorXf& y0 = ex0.second;
 
     std::cout << "\nExample training input x (log(Vtilde/K), F/K, tau, r):\n";
     reader.print(x0, 0, /*rows*/ 1, /*cols*/ x0.size());
@@ -83,15 +83,15 @@ void main_black_train()
     for (size_t i = 0; i < std::min<size_t>(100, test.size()); ++i)
     {
         const auto& ex_norm = test[i];
-        const VectorXd& x_norm     = ex_norm.first;
-        const VectorXd& y_true_norm = ex_norm.second;
+        const VectorXf& x_norm     = ex_norm.first;
+        const VectorXf& y_true_norm = ex_norm.second;
 
         // Predict in normalized space
-        VectorXd y_pred_norm = net.feedforward(x_norm);
+        VectorXf y_pred_norm = net.feedforward(x_norm);
 
         // Denormalize both prediction and target for reporting
-        VectorXd y_pred_raw = normalizer.inverse_transform_output(y_pred_norm);
-        VectorXd y_true_raw = normalizer.inverse_transform_output(y_true_norm);
+        VectorXf y_pred_raw = normalizer.inverse_transform_output(y_pred_norm);
+        VectorXf y_true_raw = normalizer.inverse_transform_output(y_true_norm);
 
         std::cout << "Test example " << i;
         std::cout << ": true sigma = " << y_true_raw[0] ;

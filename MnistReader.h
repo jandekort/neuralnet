@@ -13,10 +13,10 @@ public:
     const std::vector<Example>& training() const override { return training_; }
     const std::vector<Example>& test() const override { return test_; }
 
-    void print(const VectorXd& img, int label, int rows = 28, int cols = 28);
+    void print(const VectorXf& img, int label, int rows = 28, int cols = 28);
 
 private:
-    static std::vector<VectorXd> load_images(const std::string& path);
+    static std::vector<VectorXf> load_images(const std::string& path);
     static std::vector<int> load_labels(const std::string& path);
 
 private:

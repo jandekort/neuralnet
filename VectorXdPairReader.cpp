@@ -37,10 +37,10 @@ void VectorXdPairReader::load() {
         bucket.reserve(count);
 
         for (uint32_t i = 0; i < count; ++i) {
-            VectorXd x(in_dim);
-            VectorXd y(out_dim);
-            for (uint32_t k = 0; k < in_dim; ++k) x[k] = read_double();
-            for (uint32_t k = 0; k < out_dim; ++k) y[k] = read_double();
+            VectorXf x(in_dim);
+            VectorXf y(out_dim);
+            for (uint32_t k = 0; k < in_dim; ++k) x[k] = static_cast<float>(read_double());
+            for (uint32_t k = 0; k < out_dim; ++k) y[k] = static_cast<float>(read_double());
             bucket.emplace_back(std::move(x), std::move(y));
         }
 
@@ -55,7 +55,7 @@ void VectorXdPairReader::load() {
     }
 }
 
-void VectorXdPairReader::print(const VectorXd &img, int, int rows, int cols)
+void VectorXdPairReader::print(const VectorXf &img, int, int rows, int cols)
 {
     if (rows == 1)
     {

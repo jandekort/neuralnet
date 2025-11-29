@@ -62,14 +62,14 @@ std::vector<Example> DataGenerator::make_examples(size_t n, uint32_t in_dim, uin
             continue;
         }
 
-        VectorXd x(in_dim);
-        x[0] = std::log(Vtilde / K);
-        x[1] = F / K;
-        x[2] = tau;
-        x[3] = r;
+        VectorXf x(in_dim);
+        x[0] = static_cast<float>(std::log(Vtilde / K));
+        x[1] = static_cast<float>(F / K);
+        x[2] = static_cast<float>(tau);
+        x[3] = static_cast<float>(r);
 
-        VectorXd y(out_dim);
-        y[0] = sigma;
+        VectorXf y(out_dim);
+        y[0] = static_cast<float>(sigma);
 
         out.emplace_back(std::move(x), std::move(y));
     }
@@ -85,15 +85,15 @@ void DataGenerator::write_section(BinaryFileWriter &w, const char *tag, const st
 
     for (const auto& ex : data)
     {
-        const VectorXd& x = ex.first;
-        const VectorXd& y = ex.second;
+        const VectorXf& x = ex.first;
+        const VectorXf& y = ex.second;
         for (int i = 0; i < x.size(); ++i)
         {
-            w.write_double(x[i]);
+            w.write_double(static_cast<double>(x[i]));
         }
         for (int i = 0; i < y.size(); ++i)
         {
-            w.write_double(y[i]);
+            w.write_double(static_cast<double>(y[i]));
         }
     }
 }

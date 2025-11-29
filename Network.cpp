@@ -24,10 +24,10 @@ Network::Network(const std::vector<int> &sizes,
     // biases (no bias for input layer)
     for (int l = 1; l < num_layers_; ++l)
     {
-        VectorXd b(sizes_[l]);
+        VectorXf b(sizes_[l]);
         for (int i = 0; i < b.size(); ++i)
         {
-            b(i) = rng_.gauss();
+            b(i) = static_cast<float>(rng_.gauss());
         }
         biases_.push_back(std::move(b));
     }
@@ -38,7 +38,7 @@ Network::Network(const std::vector<int> &sizes,
 
         const Activation* act = (l == num_layers_ - 1) ? output_act_.get() : hidden_act_.get();
 
-        MatrixXd w(sizes_[l], num_in);
+        MatrixXf w(sizes_[l], num_in);
         for (int r = 0; r < w.rows(); ++r)
         {
             for (int c = 0; c < w.cols(); ++c)
@@ -57,17 +57,17 @@ Network::Network(const std::vector<int> &sizes,
 
     for (size_t l = 0; l < weights_.size(); ++l)
     {
-        m_w_[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
-        v_w_[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
-        m_b_[l] = VectorXd::Zero(biases_[l].size());
-        v_b_[l] = VectorXd::Zero(biases_[l].size());
+        m_w_[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
+        v_w_[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
+        m_b_[l] = VectorXf::Zero(biases_[l].size());
+        v_b_[l] = VectorXf::Zero(biases_[l].size());
     }
 
     adam_t_ = 0;
 }
 
 
-VectorXd Network::feedforward(const VectorXd& a0) const
+VectorXf Network::feedforward(const VectorXf& a0) const
 {
 #ifdef DEBUG
     // Validate input dimension (only in debug builds for performance)
@@ -82,12 +82,12 @@ VectorXd Network::feedforward(const VectorXd& a0) const
     }
 #endif
 
-    VectorXd a = a0;
+    VectorXf a = a0;
     const size_t L = weights_.size();
 
     for (size_t l = 0; l < L; ++l)
     {
-        VectorXd z = weights_[l] * a + biases_[l];
+        VectorXf z = weights_[l] * a + biases_[l];
 
 #ifdef DEBUG
         check_finite(z, "feedforward() z pre-activation");
@@ -121,8 +121,8 @@ void Network::validate_dataset_dimensions(const std::vector<Example>& data, cons
 
     for (size_t i = 0; i < data.size(); ++i)
     {
-        const VectorXd& x = data[i].first;
-        const VectorXd& y = data[i].second;
+        const VectorXf& x = data[i].first;
+        const VectorXf& y = data[i].second;
 
         if (x.size() != expected_input_dim)
         {
@@ -235,24 +235,24 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
 
 void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta)
 {
-    std::vector<VectorXd> nabla_b(biases_.size());
-    std::vector<MatrixXd> nabla_w(weights_.size());
+    std::vector<VectorXf> nabla_b(biases_.size());
+    std::vector<MatrixXf> nabla_w(weights_.size());
     for (size_t l = 0; l < nabla_b.size(); ++l)
     {
-        nabla_b[l] = VectorXd::Zero(biases_[l].size());
+        nabla_b[l] = VectorXf::Zero(biases_[l].size());
     }
     for (size_t l = 0; l < nabla_w.size(); ++l)
     {
-        nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+        nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
     }
 
     for (auto it = begin; it != end; ++it)
     {
-        const VectorXd& x = it->first;
-        const VectorXd& y = it->second;
+        const VectorXf& x = it->first;
+        const VectorXf& y = it->second;
 
-        std::vector<VectorXd> dnb;
-        std::vector<MatrixXd> dnw;
+        std::vector<VectorXf> dnb;
+        std::vector<MatrixXf> dnw;
 
         std::tie(dnb, dnw) = backprop(x, y); // compute per-example gradients using backpropagation
 
@@ -266,7 +266,7 @@ void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vecto
         }
     }
 
-    double lr = eta / static_cast<double>(std::distance(begin, end));
+    float lr = static_cast<float>(eta / static_cast<double>(std::distance(begin, end)));
 
     for (size_t l = 0; l < weights_.size(); ++l)
     {
@@ -284,25 +284,25 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
                                      double eta)
 {
     // 1) Accumulate gradients over the mini-batch (exactly like update_mini_batch)
-    std::vector<VectorXd> nabla_b(biases_.size());
-    std::vector<MatrixXd> nabla_w(weights_.size());
+    std::vector<VectorXf> nabla_b(biases_.size());
+    std::vector<MatrixXf> nabla_w(weights_.size());
 
     for (size_t l = 0; l < biases_.size(); ++l)
     {
-        nabla_b[l] = VectorXd::Zero(biases_[l].size());
+        nabla_b[l] = VectorXf::Zero(biases_[l].size());
     }
     for (size_t l = 0; l < weights_.size(); ++l)
     {
-        nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+        nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
     }
 
     for (auto it = begin; it != end; ++it)
     {
-        const VectorXd& x = it->first;
-        const VectorXd& y = it->second;
+        const VectorXf& x = it->first;
+        const VectorXf& y = it->second;
 
-        std::vector<VectorXd> dnb;
-        std::vector<MatrixXd> dnw;
+        std::vector<VectorXf> dnb;
+        std::vector<MatrixXf> dnw;
         std::tie(dnb, dnw) = backprop(x, y);
 
         for (size_t l = 0; l < nabla_b.size(); ++l)
@@ -317,10 +317,10 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
     }
 
     // 2) Compute average gradient for the batch
-    const double batch_size = static_cast<double>(std::distance(begin, end));
+    const float batch_size = static_cast<float>(std::distance(begin, end));
 
-    std::vector<VectorXd> g_b(nabla_b.size());
-    std::vector<MatrixXd> g_w(nabla_w.size());
+    std::vector<VectorXf> g_b(nabla_b.size());
+    std::vector<MatrixXf> g_w(nabla_w.size());
 
     for (size_t l = 0; l < nabla_b.size(); ++l)
     {
@@ -333,35 +333,36 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
     }
 
     // 3) Adam hyperparameters
-    const double beta1 = 0.9;
-    const double beta2 = 0.999;
-    const double eps   = 1e-8;
+    const float beta1 = 0.9f;
+    const float beta2 = 0.999f;
+    const float eps   = 1e-8f;
 
     // 4) Increment timestep (global across training)
     ++adam_t_;
-    const double beta1_t = std::pow(beta1, adam_t_);
-    const double beta2_t = std::pow(beta2, adam_t_);
+    const float beta1_t = std::pow(beta1, static_cast<float>(adam_t_));
+    const float beta2_t = std::pow(beta2, static_cast<float>(adam_t_));
 
     // 5) Update moments and apply Adam step
+    const float eta_f = static_cast<float>(eta);
     for (size_t l = 0; l < weights_.size(); ++l)
     {
         // weights moments
-        m_w_[l] = beta1 * m_w_[l] + (1.0 - beta1) * g_w[l];
-        v_w_[l] = beta2 * v_w_[l] + (1.0 - beta2) * g_w[l].cwiseProduct(g_w[l]);
+        m_w_[l] = beta1 * m_w_[l] + (1.0f - beta1) * g_w[l];
+        v_w_[l] = beta2 * v_w_[l] + (1.0f - beta2) * g_w[l].cwiseProduct(g_w[l]);
 
-        MatrixXd m_hat_w = m_w_[l] / (1.0 - beta1_t);
-        MatrixXd v_hat_w = v_w_[l] / (1.0 - beta2_t);
+        MatrixXf m_hat_w = m_w_[l] / (1.0f - beta1_t);
+        MatrixXf v_hat_w = v_w_[l] / (1.0f - beta2_t);
 
-        weights_[l].array() -= eta * m_hat_w.array() / (v_hat_w.array().sqrt() + eps);
+        weights_[l].array() -= eta_f * m_hat_w.array() / (v_hat_w.array().sqrt() + eps);
 
         // biases moments
-        m_b_[l] = beta1 * m_b_[l] + (1.0 - beta1) * g_b[l];
-        v_b_[l] = beta2 * v_b_[l] + (1.0 - beta2) * g_b[l].cwiseProduct(g_b[l]);
+        m_b_[l] = beta1 * m_b_[l] + (1.0f - beta1) * g_b[l];
+        v_b_[l] = beta2 * v_b_[l] + (1.0f - beta2) * g_b[l].cwiseProduct(g_b[l]);
 
-        VectorXd m_hat_b = m_b_[l] / (1.0 - beta1_t);
-        VectorXd v_hat_b = v_b_[l] / (1.0 - beta2_t);
+        VectorXf m_hat_b = m_b_[l] / (1.0f - beta1_t);
+        VectorXf v_hat_b = v_b_[l] / (1.0f - beta2_t);
 
-        biases_[l].array()  -= eta * m_hat_b.array() / (v_hat_b.array().sqrt() + eps);
+        biases_[l].array()  -= eta_f * m_hat_b.array() / (v_hat_b.array().sqrt() + eps);
     }
 }
 
@@ -398,11 +399,11 @@ EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMo
 
         for (const auto& [x, y_true] : test_data)
         {
-            VectorXd y_pred = feedforward(x);
-            VectorXd diff   = y_pred - y_true;
+            VectorXf y_pred = feedforward(x);
+            VectorXf diff   = y_pred - y_true;
 
-            sum_sq  += diff.squaredNorm(); // total L2 norm over output vec
-            sum_abs += diff.cwiseAbs().mean(); // average abs per output vec
+            sum_sq  += static_cast<double>(diff.squaredNorm()); // total L2 norm over output vec
+            sum_abs += static_cast<double>(diff.cwiseAbs().mean()); // average abs per output vec
         }
 
         const double out_dim = static_cast<double>(sizes_.back());
@@ -417,28 +418,28 @@ EvaluationResult Network::evaluate(const std::vector<Example>& test_data, EvalMo
     return res;
 }
 
-std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const VectorXd& x, const VectorXd& y) const
+std::pair<std::vector<VectorXf>, std::vector<MatrixXf>> Network::backprop(const VectorXf& x, const VectorXf& y) const
 {
-    std::vector<VectorXd> nabla_b(biases_.size());
-    std::vector<MatrixXd> nabla_w(weights_.size());
+    std::vector<VectorXf> nabla_b(biases_.size());
+    std::vector<MatrixXf> nabla_w(weights_.size());
     for (size_t l = 0; l < nabla_b.size(); ++l)
     {
-        nabla_b[l] = VectorXd::Zero(biases_[l].size());
+        nabla_b[l] = VectorXf::Zero(biases_[l].size());
     }
     for (size_t l = 0; l < nabla_w.size(); ++l)
     {
-        nabla_w[l] = MatrixXd::Zero(weights_[l].rows(), weights_[l].cols());
+        nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
     }
 
-    std::vector<VectorXd> activations; activations.reserve(num_layers_);
-    std::vector<VectorXd> zs;          zs.reserve(num_layers_-1);
+    std::vector<VectorXf> activations; activations.reserve(num_layers_);
+    std::vector<VectorXf> zs;          zs.reserve(num_layers_-1);
 
-    VectorXd a = x;
+    VectorXf a = x;
     activations.push_back(a);
     const size_t L = weights_.size();
     for (size_t l = 0; l < L; ++l)
     {
-        VectorXd z = weights_[l] * a + biases_[l];
+        VectorXf z = weights_[l] * a + biases_[l];
         zs.push_back(z);
 
 #ifdef DEBUG
@@ -462,14 +463,14 @@ std::pair<std::vector<VectorXd>, std::vector<MatrixXd>> Network::backprop(const 
     }
 
     // Output layer delta (uses cost function's delta method)
-    VectorXd delta = cost_->delta(zs.back(), activations.back(), y, *output_act_);
+    VectorXf delta = cost_->delta(zs.back(), activations.back(), y, *output_act_);
     nabla_b.back() = delta;
     nabla_w.back() = delta * activations[activations.size()-2].transpose();
 
     // Hidden layers (L-2 down to 0)
     for (int l = static_cast<int>(L) - 2; l >= 0; --l)
     {
-        VectorXd sp = hidden_act_->df(zs[l]);
+        VectorXf sp = hidden_act_->df(zs[l]);
         delta = (weights_[l+1].transpose() * delta).cwiseProduct(sp);
         nabla_b[l] = delta;
         nabla_w[l] = delta * activations[l].transpose();
@@ -495,22 +496,22 @@ void Network::print() const
     std::cout << "==========================\n";
 }
 
-std::vector<VectorXd>& Network::biases()
+std::vector<VectorXf>& Network::biases()
 {
     return biases_;
 }
 
-std::vector<MatrixXd>& Network::weights()
+std::vector<MatrixXf>& Network::weights()
 {
     return weights_;
 }
 
-const std::vector<VectorXd>& Network::biases() const
+const std::vector<VectorXf>& Network::biases() const
 {
     return biases_;
 }
 
-const std::vector<MatrixXd>& Network::weights() const
+const std::vector<MatrixXf>& Network::weights() const
 {
     return weights_;
 }

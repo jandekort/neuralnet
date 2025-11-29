@@ -8,7 +8,7 @@
 #include <vector>
 #include <Eigen/Dense>
 
-using Eigen::VectorXd;
+using Eigen::VectorXf;
 
 
 class VectorXdPairReader : public IDataReader
@@ -22,7 +22,7 @@ public:
     const std::vector<Example>& training() const override { return training_; }
     const std::vector<Example>& test() const override { return test_; }
 
-    void print(const VectorXd& img, int /*label*/, int rows = 1, int cols = 1) ;
+    void print(const VectorXf& img, int /*label*/, int rows = 1, int cols = 1) ;
 
 private:
     std::string path_;

@@ -9,8 +9,8 @@
 #include <Eigen/Dense>
 #include "BinaryFileWriter.h"
 
-using Eigen::VectorXd;
-using Example = std::pair<VectorXd, VectorXd>;
+using Eigen::VectorXf;
+using Example = std::pair<VectorXf, VectorXf>;
 
 class DataGenerator {
 public:

@@ -7,21 +7,21 @@
 class Linear : public Activation
 {
 public:
-    VectorXd f(const VectorXd& z) const override
+    VectorXf f(const VectorXf& z) const override
     {
         return z;  // identity
     }
 
-    VectorXd df(const VectorXd& z) const override
+    VectorXf df(const VectorXf& z) const override
     {
         // derivative is 1 everywhere
-        return VectorXd::Ones(z.size());
+        return VectorXf::Ones(z.size());
     }
 
-    double initWeight(RNG& rng, int num_in) const override
+    float initWeight(RNG& rng, int num_in) const override
     {
         // Xavier/Glorot Normal initialization: N(0, 1/sqrt(num_in))
-        const double scale = 1.0 / std::sqrt(static_cast<double>(num_in));
-        return rng.gauss() * scale;
+        const float scale = 1.0f / std::sqrt(static_cast<float>(num_in));
+        return static_cast<float>(rng.gauss()) * scale;
     }
 };
