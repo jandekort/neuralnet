@@ -147,6 +147,12 @@ void Network::validate_dataset_dimensions(const std::vector<Example>& data, cons
 void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batch_size, double eta, const std::vector<Example>* test_data,
                   EvalMode mode, double decay, Optimizer optimizer)
 {
+#if _OPENMP
+    std::cout << "Parallelization: ENABLED (using " << omp_get_max_threads() << " threads)\n";
+#else
+    std::cout << "Parallelization: DISABLED (serial execution)\n";
+#endif
+    
     validate_dataset_dimensions(training_data, "Training data");
     if (test_data)
     {
@@ -235,6 +241,8 @@ void Network::SGD(std::vector<Example>& training_data, int epochs, int mini_batc
 
 void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vector<Example>::iterator end, double eta)
 {
+    const int batch_size = static_cast<int>(std::distance(begin, end));
+
     std::vector<VectorXf> nabla_b(biases_.size());
     std::vector<MatrixXf> nabla_w(weights_.size());
     for (size_t l = 0; l < nabla_b.size(); ++l)
@@ -246,6 +254,47 @@ void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vecto
         nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
     }
 
+#ifdef _OPENMP
+    #pragma omp parallel
+    {
+        // Thread-local gradient accumulators
+        std::vector<VectorXf> local_nabla_b(biases_.size());
+        std::vector<MatrixXf> local_nabla_w(weights_.size());
+        for (size_t l = 0; l < local_nabla_b.size(); ++l)
+        {
+            local_nabla_b[l] = VectorXf::Zero(biases_[l].size());
+            local_nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
+        }
+
+        #pragma omp for nowait
+        for (int i = 0; i < batch_size; ++i)
+        {
+            auto it = begin + i;
+            const VectorXf& x = it->first;
+            const VectorXf& y = it->second;
+
+            std::vector<VectorXf> dnb;
+            std::vector<MatrixXf> dnw;
+            std::tie(dnb, dnw) = backprop(x, y); // Thread-safe: backprop() is const, only reads weights_/biases_
+
+            for (size_t l = 0; l < local_nabla_b.size(); ++l)
+            {
+                local_nabla_b[l] += dnb[l];
+                local_nabla_w[l] += dnw[l];
+            }
+        }
+
+        #pragma omp critical // Thread-safe: protects shared nabla_b/nabla_w from concurrent writes
+        {
+            for (size_t l = 0; l < nabla_b.size(); ++l)
+            {
+                nabla_b[l] += local_nabla_b[l];
+                nabla_w[l] += local_nabla_w[l];
+            }
+        }
+    } // Parallel region ends - parameter updates below run sequentially (single-threaded)
+#else
+    // Sequential fallback when OpenMP is not available
     for (auto it = begin; it != end; ++it)
     {
         const VectorXf& x = it->first;
@@ -253,20 +302,20 @@ void Network::update_mini_batch(std::vector<Example>::iterator begin, std::vecto
 
         std::vector<VectorXf> dnb;
         std::vector<MatrixXf> dnw;
-
-        std::tie(dnb, dnw) = backprop(x, y); // compute per-example gradients using backpropagation
+        std::tie(dnb, dnw) = backprop(x, y);
 
         for (size_t l = 0; l < nabla_b.size(); ++l)
         {
-            nabla_b[l] += dnb[l]; // accumulate gradients in mini batch
+            nabla_b[l] += dnb[l];
         }
         for (size_t l = 0; l < nabla_w.size(); ++l)
         {
-            nabla_w[l] += dnw[l]; // accumulate gradients in mini batch
+            nabla_w[l] += dnw[l];
         }
     }
+#endif
 
-    float lr = static_cast<float>(eta / static_cast<double>(std::distance(begin, end)));
+    float lr = static_cast<float>(eta / static_cast<double>(batch_size));
 
     for (size_t l = 0; l < weights_.size(); ++l)
     {
@@ -284,6 +333,8 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
                                      double eta)
 {
     // 1) Accumulate gradients over the mini-batch (exactly like update_mini_batch)
+    const int batch_size = static_cast<int>(std::distance(begin, end));
+
     std::vector<VectorXf> nabla_b(biases_.size());
     std::vector<MatrixXf> nabla_w(weights_.size());
 
@@ -296,6 +347,47 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
         nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
     }
 
+#ifdef _OPENMP
+    #pragma omp parallel
+    {
+        // Thread-local gradient accumulators
+        std::vector<VectorXf> local_nabla_b(biases_.size());
+        std::vector<MatrixXf> local_nabla_w(weights_.size());
+        for (size_t l = 0; l < local_nabla_b.size(); ++l)
+        {
+            local_nabla_b[l] = VectorXf::Zero(biases_[l].size());
+            local_nabla_w[l] = MatrixXf::Zero(weights_[l].rows(), weights_[l].cols());
+        }
+
+        #pragma omp for nowait
+        for (int i = 0; i < batch_size; ++i)
+        {
+            auto it = begin + i;
+            const VectorXf& x = it->first;
+            const VectorXf& y = it->second;
+
+            std::vector<VectorXf> dnb;
+            std::vector<MatrixXf> dnw;
+            std::tie(dnb, dnw) = backprop(x, y); // Thread-safe: backprop() is const, only reads weights_/biases_
+
+            for (size_t l = 0; l < local_nabla_b.size(); ++l)
+            {
+                local_nabla_b[l] += dnb[l];
+                local_nabla_w[l] += dnw[l];
+            }
+        }
+
+        #pragma omp critical // Thread-safe: protects shared nabla_b/nabla_w from concurrent writes
+        {
+            for (size_t l = 0; l < nabla_b.size(); ++l)
+            {
+                nabla_b[l] += local_nabla_b[l];
+                nabla_w[l] += local_nabla_w[l];
+            }
+        }
+    } // Parallel region ends - parameter updates below run sequentially (single-threaded)
+#else
+    // Sequential fallback when OpenMP is not available
     for (auto it = begin; it != end; ++it)
     {
         const VectorXf& x = it->first;
@@ -315,21 +407,22 @@ void Network::update_mini_batch_adam(std::vector<Example>::iterator begin,
             nabla_w[l] += dnw[l];
         }
     }
+#endif
 
     // 2) Compute average gradient for the batch
-    const float batch_size = static_cast<float>(std::distance(begin, end));
+    const float batch_size_f = static_cast<float>(batch_size);
 
     std::vector<VectorXf> g_b(nabla_b.size());
     std::vector<MatrixXf> g_w(nabla_w.size());
 
     for (size_t l = 0; l < nabla_b.size(); ++l)
     {
-        g_b[l] = nabla_b[l] / batch_size;
+        g_b[l] = nabla_b[l] / batch_size_f;
     }
 
     for (size_t l = 0; l < nabla_w.size(); ++l)
     {
-        g_w[l] = nabla_w[l] / batch_size;
+        g_w[l] = nabla_w[l] / batch_size_f;
     }
 
     // 3) Adam hyperparameters
