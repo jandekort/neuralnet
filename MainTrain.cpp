@@ -19,10 +19,10 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs           = 200;
+    int    epochs           = 100;
     int    mini_batch_size  = 1024*8;
-    double eta              = 0.003; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
-    double decay            = 0.99;
+    double eta              = 0.0010; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
+    double decay            = 0.995;
 
     // Setup activation function
     //auto sigmoid = std::make_shared<Sigmoid>();
@@ -66,7 +66,7 @@ void main_black_train()
     normalizer.transform_dataset_inplace(test);  // normalize test data
 
     // Initialise network
-    Network net({4, 300, 300, 300, 1}, relu, linear);
+    Network net({4, 400, 400, 400, 400, 1}, relu, linear);
 
     // Train and evaluate in regression mode on NORMALIZED data
     std::cout << "\nStarting training...\n";
