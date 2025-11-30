@@ -19,9 +19,9 @@ void main_black_train()
     const std::string dataset_path = "GeneratedData.bin";
 
     // Hyperparameters
-    int    epochs           = 100;
-    int    mini_batch_size  = 1024*8;
-    double eta              = 0.0010; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
+    int    epochs           = 200;
+    int    mini_batch_size  = 1024*16;
+    double eta              = 5.0e-5; // chosen as the largest learning rate that remains numerically stable (no NaNs) and yields consistently decreasing loss
     double decay            = 0.995;
 
     // Setup activation function
