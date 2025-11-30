@@ -4,26 +4,31 @@ project(NeuralNet LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(USE_OPENMP "Enable OpenMP parallelization" ON) # On: Enable OpenMP, Off: Disable OpenMP (Reset Cache & Reload Project)
+
 # Eigen (Homebrew install assumed)
 set(CMAKE_PREFIX_PATH "/opt/homebrew/share/eigen3/cmake")
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# OpenMP for Eigen parallelization
-# On macOS with Homebrew, libomp is keg-only, so we need to set paths explicitly
-if(APPLE)
-    set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
-    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
-    set(OpenMP_C_LIB_NAMES "omp")
-    set(OpenMP_CXX_LIB_NAMES "omp")
-    set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/libomp/lib/libomp.dylib")
-endif()
+# OpenMP for parallel execution
+if(USE_OPENMP)
+    # On macOS with Homebrew, libomp is keg-only, so we need to set paths explicitly
+    if(APPLE)
+        set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+        set(OpenMP_C_LIB_NAMES "omp")
+        set(OpenMP_CXX_LIB_NAMES "omp")
+        set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/libomp/lib/libomp.dylib")
+    endif()
 
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP found - enabling Eigen parallelization")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        message(STATUS "OpenMP parallelization: ENABLED")
+    else()
+        message(WARNING "OpenMP not found - falling back to serial execution")
+    endif()
 else()
-    message(WARNING "OpenMP not found - Eigen will run single-threaded")
+    message(STATUS "OpenMP parallelization: DISABLED (serial execution)")
 endif()
 
 # Compiler optimization flags
@@ -56,8 +61,8 @@ target_link_libraries(NeuralNet_Lib
         PUBLIC Eigen3::Eigen
 )
 
-# Link OpenMP if available
-if(OpenMP_CXX_FOUND)
+# Link OpenMP if enabled and available
+if(USE_OPENMP AND OpenMP_CXX_FOUND)
     target_link_libraries(NeuralNet_Lib PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
